@@ -1,0 +1,23 @@
+# .gitignore
+
+# Database
+migrations/*
+!migrations/README.md  # keep docs if desired
+/data/
+
+.env
+
+# Compiled files and artifacts
+/target/
+
+# Rust build artifacts
+Cargo.lock # optional to ignore for libraries
+
+# Frontend
+/frontend/node_modules/
+/frontend/dist/
+/frontend/.vscode/
+/frontend/.gitignore
+
+# Secrets
+google_token.json

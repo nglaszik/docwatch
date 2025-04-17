@@ -1,0 +1,16 @@
+# systemd/docwatch.service
+[Unit]
+Description=Docwatch Server
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/docwatch
+WorkingDirectory=/opt/docwatch
+EnvironmentFile=/etc/docwatch/.env
+Restart=always
+RestartSec=2
+User=www-data
+Group=www-data
+
+[Install]
+WantedBy=multi-user.target
