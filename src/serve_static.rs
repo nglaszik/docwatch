@@ -10,8 +10,11 @@ use mime_guess::from_path;
 static DIST_DIR: Dir = include_dir!("$CARGO_MANIFEST_DIR/frontend/dist");
 
 pub async fn serve_spa(uri: Uri) -> impl IntoResponse {
-	let path = uri.path().trim_start_matches('/');
+	// 👇 Remove the `/docwatch/` prefix from the path so lookup works
+	let full_path = uri.path();
+	let path = full_path.strip_prefix("/docwatch/").unwrap_or("").trim_start_matches('/');
 
+	// 👇 Try to find the file
 	if let Some(file) = DIST_DIR.get_file(path) {
 		let mime = from_path(path).first_or_octet_stream();
 		return Response::builder()
@@ -21,6 +24,7 @@ pub async fn serve_spa(uri: Uri) -> impl IntoResponse {
 			.unwrap();
 	}
 
+	// 👇 Fallback to index.html for SPA routes
 	let index = DIST_DIR.get_file("index.html").unwrap();
 	Response::builder()
 		.status(StatusCode::OK)

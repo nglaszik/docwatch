@@ -27,7 +27,7 @@ async fn main() {
 	});
 
 	let app = Router::new()
-		.nest("/api", routes::routes())
+		.nest("/docwatch/api", routes::routes())
 		.layer(CookieManagerLayer::new())
 		.with_state(state)
 		.fallback(serve_spa);

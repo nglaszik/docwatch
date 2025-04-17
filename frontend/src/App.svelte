@@ -14,7 +14,7 @@
   let expandedDocs = new Set(); // holds doc_ids that are currently expanded
 
   async function login() {
-    const res = await fetch("/api/auth/login", {
+    const res = await fetch("/docwatch/api/auth/login", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -34,7 +34,7 @@
   
   async function logout() {
     try {
-      const res = await fetch("/api/auth/logout");
+      const res = await fetch("/docwatch/api/auth/logout");
       if (res.ok) {
         loggedIn = false;
         docs = [];
@@ -48,13 +48,13 @@
   }
 
   async function fetchDocs() {
-    const res = await fetch("/api/docs");
+    const res = await fetch("/docwatch/api/docs");
     docs = await res.json();
     console.log("Fetched docs:", docs);
   }
 
   async function addDoc() {
-    await fetch("/api/docs", {
+    await fetch("/docwatch/api/docs", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ doc_id: newDocId })
@@ -72,7 +72,7 @@
     // If we've never fetched it, fetch it first
     if (!visibleRevisions.has(docId)) {
       console.log("📡 Fetching revisions for", docId);
-      const res = await fetch(`/api/docs/${docId}/revisions`);
+      const res = await fetch("/docwatch/api/docs/${docId}/revisions");
       const data = await res.json();
       visibleRevisions.set(docId, data);
     }
@@ -92,7 +92,7 @@
   
   onMount(async () => {
     
-    const res = await fetch("/api/auth/me");
+    const res = await fetch("/docwatch/api/auth/me");
     
     if (res.ok) {
       loggedIn = true;

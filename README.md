@@ -84,7 +84,7 @@ cargo build
 
 ---
 
-## Installation
+# Installation
 
 To build and install:
 
@@ -146,7 +146,7 @@ GOOGLE_CLIENT_SECRET=your_client_secret_here
 
 ---
 
-## Starting the Service
+## Add a User
 
 Before running the app, run
 
