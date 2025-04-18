@@ -21,3 +21,5 @@ Cargo.lock # optional to ignore for libraries
 
 # Secrets
 google_token.json
+
+.svelte-kit

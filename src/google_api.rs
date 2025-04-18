@@ -111,8 +111,6 @@ pub async fn get_many_modified_times() -> Result<HashMap<String, (String, String
 			.json::<serde_json::Value>()
 			.await?;
 
-		println!("🔍 Google API returned: {:#}", res);
-
 		if let Some(files) = res["files"].as_array() {
 			for file in files {
 				let id = file.get("id").and_then(|v| v.as_str()).unwrap_or("");

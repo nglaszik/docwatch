@@ -12,10 +12,18 @@ struct CurrentUser {
 }
 
 #[derive(Serialize)]
+struct RevisionSummary {
+	revision_time: String,
+	added_chars: Option<i64>,
+	deleted_chars: Option<i64>,
+}
+
+#[derive(Serialize)]
 struct DocInfo {
 	doc_id: String,
 	name: String,
 	last_updated: String,
+	revision_summary: Vec<RevisionSummary>,
 }
 
 #[derive(Deserialize)]
@@ -51,16 +59,41 @@ pub async fn get_docs(
 ) -> impl IntoResponse {
 	match get_user_id_from_cookie(&state.db, &cookies).await {
 		Ok(user_id) => {
-			let docs = sqlx::query_as!(
-				DocInfo,
-				"SELECT doc_id, name, last_updated FROM documents WHERE user_id = ?",
+			// Fetch the user's docs
+			let raw_docs = sqlx::query!(
+				"SELECT id, doc_id, name, last_updated FROM documents WHERE user_id = ?",
 				user_id
 			)
 			.fetch_all(&state.db)
 			.await
 			.unwrap_or_else(|_| vec![]);
 
-			Json(docs).into_response()
+			// Now enrich each doc with its revision summary
+			let mut docs_with_summaries = Vec::with_capacity(raw_docs.len());
+
+			for doc in raw_docs {
+				let revisions = sqlx::query_as!(
+					RevisionSummary,
+					"SELECT revision_time, added_chars, deleted_chars
+					 FROM document_revisions
+					 WHERE document_id = ?
+					 ORDER BY revision_time DESC
+					 LIMIT 100",
+					doc.id
+				)
+				.fetch_all(&state.db)
+				.await
+				.unwrap_or_else(|_| vec![]);
+
+				docs_with_summaries.push(DocInfo {
+					doc_id: doc.doc_id,
+					name: doc.name,
+					last_updated: doc.last_updated,
+					revision_summary: revisions,
+				});
+			}
+
+			Json(docs_with_summaries).into_response()
 		}
 		Err(code) => (code, "Unauthorized").into_response(),
 	}
