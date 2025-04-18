@@ -1,8 +1,6 @@
 # .gitignore
 
-# Database
-migrations/*
-!migrations/README.md  # keep docs if desired
+# Database is made during migrations
 /data/
 
 .env
