@@ -32,7 +32,7 @@ CREATE TABLE document_revisions (
   revision_time TEXT NOT NULL,
   content TEXT NOT NULL,
   diff TEXT,
-  added_chars INTEGER DEFAULT 0,
-  deleted_chars INTEGER DEFAULT 0,
+  added_words INTEGER DEFAULT 0,
+  deleted_words INTEGER DEFAULT 0,
   FOREIGN KEY(document_id) REFERENCES documents(id)
 );

@@ -34,6 +34,7 @@ webbrowser = "1.0.4"
 dotenv = "0.15.0"
 diff = "0.1"
 anyhow = "1.0.98"
+regex = "1.11.1"
 
 [[bin]]
 name = "authctl"

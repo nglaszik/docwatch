@@ -2,20 +2,17 @@ use axum::{extract::{State, Json}, response::IntoResponse, http::StatusCode};
 use serde::{Deserialize, Serialize};
 use sqlx::SqlitePool;
 use crate::state::AppState;
-use tower_cookies::{Cookies, Cookie};
+use tower_cookies::{Cookies};
 use axum::extract::Path;
 
+use crate::poller::OwnedWordChange;
 use crate::google_api::{get_doc_info, add_docwatch_property};
-
-struct CurrentUser {
-	id: i64,
-}
 
 #[derive(Serialize)]
 struct RevisionSummary {
 	revision_time: String,
-	added_chars: Option<i64>,
-	deleted_chars: Option<i64>,
+	added_words: Option<i64>,
+	deleted_words: Option<i64>,
 }
 
 #[derive(Serialize)]
@@ -74,7 +71,7 @@ pub async fn get_docs(
 			for doc in raw_docs {
 				let revisions = sqlx::query_as!(
 					RevisionSummary,
-					"SELECT revision_time, added_chars, deleted_chars
+					"SELECT revision_time, added_words, deleted_words
 					 FROM document_revisions
 					 WHERE document_id = ?
 					 ORDER BY revision_time DESC
@@ -99,6 +96,8 @@ pub async fn get_docs(
 	}
 }
 
+// TODO: Remove
+// this is a function for adding a document in the UI, not really needed...
 pub async fn add_doc(
 	State(state): State<AppState>,
 	cookies: Cookies,
@@ -157,24 +156,33 @@ pub async fn get_revisions(
 	.await;
 
 	match revisions {
-		Ok(rows) => Json(
-			rows.into_iter()
+		Ok(rows) => {
+			let summaries = rows
+				.into_iter()
 				.map(|r| {
-					let added_chars = r.diff
-						.as_deref()             // converts Option<String> → Option<&str>
-						.unwrap_or("")          // safely handle None
-						.lines()
-						.filter(|l| l.starts_with('+'))
-						.map(|l| l.len())
-						.sum::<usize>();
+					let diff_str = r.diff.unwrap_or_else(|| "[]".to_string());
+
+					// Try to parse the diff JSON
+					let added_words = serde_json::from_str::<Vec<OwnedWordChange>>(&diff_str)
+						.map(|changes| {
+							changes
+								.into_iter()
+								.filter(|c| matches!(c, OwnedWordChange::Added(_)))
+								.count()
+						})
+						.unwrap_or(0); // fallback if deserialization fails
+
 					serde_json::json!({
 						"revision_time": r.revision_time,
-						"diff": r.diff,
-						"added_chars": added_chars
+						"diff": diff_str,
+						"added_words": added_words
 					})
 				})
-				.collect::<Vec<_>>()
-		).into_response(),
+				.collect::<Vec<_>>();
+
+			Json(summaries).into_response()
+		}
 		Err(_) => (StatusCode::INTERNAL_SERVER_ERROR, "Failed to fetch revisions").into_response(),
 	}
 }
+

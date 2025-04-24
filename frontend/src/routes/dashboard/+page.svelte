@@ -16,42 +16,25 @@
   let visibleRevisions = new Map();
   let expandedDocs = new Set();
   
-  function groupDiffLines(diff: string): { type: 'add' | 'del' | 'neutral', text: string }[] {
-	const lines = diff.split('\n');
-	const grouped: { type: 'add' | 'del' | 'neutral', text: string }[] = [];
-	
-	let currentType = null;
-	let buffer = '';
-	
-	for (const line of lines) {
-		let type: 'add' | 'del' | 'neutral' = 'neutral';
-		let content = line;
-	
-		if (line.startsWith('+ ')) {
-		type = 'add';
-		content = line.slice(2);
-		} else if (line.startsWith('- ')) {
-		type = 'del';
-		content = line.slice(2);
-		} else if (line.startsWith('  ')) {
-		type = 'neutral';
-		content = line.slice(2);
-		}
-	
-		if (type !== currentType && buffer) {
-		grouped.push({ type: currentType, text: buffer });
-		buffer = '';
-		}
-	
-		currentType = type;
-		buffer += content + ' ';
-	}
-	
-	if (buffer) {
-		grouped.push({ type: currentType!, text: buffer });
-	}
-	
-	return grouped;
+  type DiffBlock = { type: 'add' | 'del' | 'neutral', text: string };
+  
+  export function groupDiffWords(diffJson: string): DiffBlock[] {
+	  try {
+		  const parsed = JSON.parse(diffJson);
+		  if (!Array.isArray(parsed)) return [];
+  
+		  return parsed.map((entry: { type: string; text: string }) => {
+			  switch (entry.type) {
+				  case 'Added': return { type: 'add', text: entry.text };
+				  case 'Removed': return { type: 'del', text: entry.text };
+				  case 'Unchanged': return { type: 'neutral', text: entry.text };
+				  default: return { type: 'neutral', text: entry.text };
+			  }
+		  });
+	  } catch (e) {
+		  console.error("Failed to parse diff JSON:", e);
+		  return [];
+	  }
   }
 
   async function addDocHandler() {
@@ -62,7 +45,6 @@
   
   async function fetchDocsHandler() {
 	docs = await fetchDocs();
-	console.log("📦 docs loaded:", docs);
   }
   
   async function fetchRevisionsHandler(docId: string) {
@@ -144,17 +126,19 @@
 					{#each visibleRevisions.get(doc.doc_id) as rev}
 					  <li>
 						<div class="text-sm font-medium text-gray-800 mb-1">
-						  {formatTime(rev.revision_time)} — {rev.added_chars} chars added
+						  {formatTime(rev.revision_time)} — {rev.added_words} words added
 						</div>
 						<div class="whitespace-pre-wrap break-words overflow-x-auto bg-gray-50 border border-gray-300 rounded p-2 text-sm leading-snug">
-						  {#each groupDiffLines(rev.diff) as block}
-							{#if block.type === 'add'}
-							  <p class="text-green-600">{block.text.trim()}</p>
-							{:else if block.type === 'del'}
-							  <p class="text-red-600 line-through">{block.text.trim()}</p>
-							{:else}
-							  <p class="text-gray-700">{block.text.trim()}</p>
-							{/if}
+						  {#each groupDiffWords(rev.diff) as block}
+							  {#if block.text === '\n'}
+								  <br />
+							  {:else if block.type === 'add'}
+								  <span class="text-green-600">{block.text}</span>
+							  {:else if block.type === 'del'}
+								  <span class="text-red-600 line-through">{block.text}</span>
+							  {:else}
+								  <span>{block.text}</span>
+							  {/if}
 						  {/each}
 						</div>
 					  </li>

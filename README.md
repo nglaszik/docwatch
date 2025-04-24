@@ -1,18 +1,28 @@
 # Docwatch
 
-**Docwatch** is a web app designed to replace traditional AI detectors by analyzing the **revision history** of Google Docs (and soon, OneDrive documents). Instead of relying on unreliable classifiers, Docwatch highlights *when* content was added and how documents evolve over time — giving instructors and reviewers a transparent view of writing patterns.
+**Docwatch** is a web app designed to replace traditional AI detectors by analyzing the **revision history** of Google Docs (and soon, OneDrive documents). Instead of using unreliable classifiers, Docwatch highlights *when* content was added and how documents evolve over time — giving instructors and reviewers a transparent view of writing patterns.
+
+Docwatch is developed to be installed on a server with minimal overhead. Users can then access the app via a browser.
+
+Having a document be visible in Docwatch is as simple as a student sharing the document with the Docwatch service account.
 
 This project is still heavily under development, so bugs are guaranteed.
 
-Docwatch is developed to be as lightweight as possible so it can be easily installed anywhere with minimal overhead.
+---
+
+# Installation
+
+For all users: Before installation, set up a Google Cloud project and enable API access.
+
+For most users: Run the install script, which downloads and installs the pre-built binaries.
+
+For developers: Before building Docwatch, ensure your system has the prerequisites installed.
+
+For all users: After installation, run docwatch-authctl with an accessible local web browser to complete OAuth setup, and docwatch-userctl to create a user (required)
 
 ---
 
 # Development Prerequisites
-
-Before building or running Docwatch locally, ensure your system has the following tools installed:
-
----
 
 ## System Dependencies
 
@@ -23,15 +33,9 @@ sudo apt update
 sudo apt install build-essential libssl-dev pkg-config sqlite3
 ```
 
-### macOS (using Homebrew)
-
-```bash
-brew install openssl sqlite
-```
-
 ---
 
-## Rust (Backend)
+## Rust
 
 Install the Rust toolchain:
 
@@ -47,7 +51,7 @@ rustup component add clippy rustfmt
 
 ---
 
-## Node + npm (Frontend)
+## Node + npm
 
 Make sure you have a recent version of Node.js and npm:
 
@@ -69,22 +73,7 @@ nvm install --lts
 
 ---
 
-## Project Setup
-
-Once all dependencies are installed:
-
-```bash
-# Frontend
-cd frontend
-npm install
-
-# Backend
-cargo build
-```
-
----
-
-# Installation
+## Build/Install
 
 To build and install:
 
@@ -95,22 +84,36 @@ sudo make install
 
 > This will:
 > - Build the app
-> - Copy the backend binary to `/usr/local/bin/docwatch`
-> - Install the systemd service file to `/etc/systemd/system/docwatch.service`
+> - Move binaries and pages
+> - Start the docwatch service
+
+The app will now be running (by default) at [http://localhost:3009](http://localhost:3009)
+
+---
+
+## Testing
+
+Once all dependencies are installed:
+
+```bash
+# Frontend
+cd frontend
+npm install
+
+# Backend
+cargo run --bin docwatch
+```
 
 ---
 
 ## Starting the Service
 
-After installation, you can start and enable the service:
+After installation, the service will automatically be started but can be managed with systemctl:
 
 ```bash
-sudo systemctl daemon-reexec
-sudo systemctl daemon-reload
-sudo systemctl enable --now docwatch.service
+sudo systemctl status docwatch.service
+sudo systemctl restart docwatch.service
 ```
-
-The app will now be running (by default) at [http://localhost:3009](http://localhost:3009)
 
 ---
 
@@ -155,20 +158,6 @@ docwatch-userctl
 ```
 
 To add a user to the app's database
-
----
-
-## Starting the Service
-
-After installation, you can start and enable the service:
-
-```bash
-sudo systemctl daemon-reexec
-sudo systemctl daemon-reload
-sudo systemctl enable --now docwatch.service
-```
-
-The app will now be running (by default) at [http://localhost:3009](http://localhost:3009)
 
 ---
 

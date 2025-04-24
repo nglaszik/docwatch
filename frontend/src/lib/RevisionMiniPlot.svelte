@@ -4,8 +4,8 @@
 
   export let revisions: {
 	revision_time: string;
-	added_chars: number;
-	deleted_chars: number;
+	added_words: number;
+	deleted_words: number;
   }[];
 
   let canvasEl: HTMLCanvasElement;
@@ -22,8 +22,8 @@
 	  const key = rounded.toISOString();
 
 	  if (!bins.has(key)) bins.set(key, { added: 0, deleted: 0 });
-	  bins.get(key)!.added += rev.added_chars;
-	  bins.get(key)!.deleted += rev.deleted_chars ?? 0;
+	  bins.get(key)!.added += rev.added_words;
+	  bins.get(key)!.deleted += rev.deleted_words ?? 0;
 	}
 
 	const labels = Array.from(bins.keys()).sort();
@@ -85,7 +85,7 @@
 		  y: {
 			title: {
 			  display: true,
-			  text: 'Chars',
+			  text: 'Words',
 			  color: '#666',
 			  font: {
 				size: 10
