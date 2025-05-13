@@ -5,6 +5,8 @@
 
 .env
 
+.sqlx/
+
 # Compiled files and artifacts
 /target/
 

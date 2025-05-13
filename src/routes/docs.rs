@@ -174,7 +174,7 @@ pub async fn add_doc(
 	.execute(&state.db)
 	.await;
 
-	(StatusCode::OK, "Document added").into_response()
+	StatusCode::NO_CONTENT.into_response()
 }
 
 pub async fn get_revisions(

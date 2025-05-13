@@ -72,6 +72,7 @@
 			},
 			title: {
 			  display: true,
+			  text: 'Time',
 			  color: '#666',
 			  font: {
 				size: 10
@@ -84,6 +85,7 @@
 		  y: {
 			title: {
 			  display: true,
+			  text: 'Words Written/Deleted',
 			  color: '#666',
 			  font: {
 				size: 10
@@ -117,7 +119,7 @@
 
 <style>
   .plot-wrapper {
-	height: 60px;
+	height: 300px;
 	width: 100%;
   }
 
