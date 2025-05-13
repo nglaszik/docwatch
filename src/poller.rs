@@ -4,7 +4,7 @@ use serde::{Serialize, Deserialize};
 use diff::{self, Result as DiffResult};
 use regex::Regex;
 
-use crate::google_api::{get_many_modified_times, get_google_text};
+use crate::google_api::{get_google_docs, get_google_text, get_docx_text};
 
 #[derive(Debug)]
 pub enum WordChange<'a> {
@@ -76,10 +76,9 @@ pub fn diff_words<'a>(old: &'a str, new: &'a str) -> Vec<WordChange<'a>> {
 }
 
 async fn poll_all_docs(pool: &SqlitePool) -> Result<(), sqlx::Error> {
-	
-	let modified_map = get_many_modified_times().await.unwrap_or_default();
+	let modified_map = get_google_docs().await.unwrap_or_default();
 
-	for (doc_id, (name, modified_time, export_link)) in modified_map {
+	for (doc_id, (name, modified_time, export_link, owner_username, mime_type)) in modified_map {
 		let db_doc = sqlx::query!(
 			"SELECT id, last_updated, latest_content FROM documents WHERE doc_id = ?",
 			doc_id
@@ -90,32 +89,45 @@ async fn poll_all_docs(pool: &SqlitePool) -> Result<(), sqlx::Error> {
 		match db_doc {
 			Some(db) => {
 				if db.last_updated != modified_time {
-					
 					let latest_content = db.latest_content.unwrap_or_default();
-					
-					let new_content = match get_google_text(&export_link).await {
-						Ok(text) => text,
-						Err(e) => {
-							eprintln!("⚠️ Failed to fetch document text: {}", e);
+
+					// Fetch the document's current content (only when needed)
+					let new_content = match mime_type.as_str() {
+						"application/vnd.google-apps.document" => match get_google_text(&export_link).await {
+							Ok(text) => text,
+							Err(e) => {
+								eprintln!("⚠️ Failed to fetch Google Doc text: {}", e);
+								continue;
+							}
+						},
+						"application/vnd.openxmlformats-officedocument.wordprocessingml.document" => match get_docx_text(&doc_id).await {
+							Ok(text) => text,
+							Err(e) => {
+								eprintln!("⚠️ Failed to fetch DOCX content: {}", e);
+								continue;
+							}
+						},
+						other => {
+							eprintln!("⚠️ Unsupported MIME type: {}", other);
 							continue;
 						}
 					};
 
 					let diff = diff_words(&latest_content, &new_content);
 					let (added_words, deleted_words) = count_words_from_diff(&diff);
-					
-					let owned_diff: Vec<OwnedWordChange> = diff.into_iter().map(Into::into).collect();
-					let diff_json = serde_json::to_string(&owned_diff)
-						.map_err(|e| sqlx::Error::ColumnDecode {
-							index: "diff_json".into(),
-							source: Box::new(e),
-						})?;
-					
-					let added_words = added_words as i64;
-					let deleted_words = deleted_words as i64;
 
 					if added_words > 0 || deleted_words > 0 {
 						println!("New revision found for: {}", name);
+
+						let owned_diff: Vec<OwnedWordChange> = diff.into_iter().map(Into::into).collect();
+						let diff_json = serde_json::to_string(&owned_diff)
+							.map_err(|e| sqlx::Error::ColumnDecode {
+								index: "diff_json".into(),
+								source: Box::new(e),
+							})?;
+							
+						let added_words = added_words as i64;
+						let deleted_words = deleted_words as i64;
 
 						sqlx::query!(
 							"INSERT INTO document_revisions (
@@ -132,11 +144,14 @@ async fn poll_all_docs(pool: &SqlitePool) -> Result<(), sqlx::Error> {
 						.await?;
 
 						sqlx::query!(
-							"UPDATE documents SET name = ?, last_updated = ?, latest_content = ?, export_link = ? WHERE id = ?",
+							"UPDATE documents
+							 SET name = ?, last_updated = ?, latest_content = ?, export_link = ?, owner_username = ?
+							 WHERE id = ?",
 							name,
 							modified_time,
 							new_content,
 							export_link,
+							owner_username,
 							db.id
 						)
 						.execute(pool)
@@ -145,40 +160,53 @@ async fn poll_all_docs(pool: &SqlitePool) -> Result<(), sqlx::Error> {
 				}
 			}
 			None => {
-				// 📄 New document — fetch actual content
-				let initial_content = match get_google_text(&export_link).await {
-					Ok(text) => text,
-					Err(e) => {
-						eprintln!("⚠️ Failed to fetch initial content for new doc: {}", e);
+				// 📄 New document — must always fetch content
+				let new_content = match mime_type.as_str() {
+					"application/vnd.google-apps.document" => match get_google_text(&export_link).await {
+						Ok(text) => text,
+						Err(e) => {
+							eprintln!("⚠️ Failed to fetch Google Doc text: {}", e);
+							continue;
+						}
+					},
+					"application/vnd.openxmlformats-officedocument.wordprocessingml.document" => match get_docx_text(&doc_id).await {
+						Ok(text) => text,
+						Err(e) => {
+							eprintln!("⚠️ Failed to fetch DOCX content: {}", e);
+							continue;
+						}
+					},
+					other => {
+						eprintln!("⚠️ Unsupported MIME type: {}", other);
 						continue;
 					}
 				};
 
-				// Insert into `documents` with actual content
+				// Insert into `documents` with owner_username
 				let res = sqlx::query!(
-					"INSERT INTO documents (user_id, doc_id, name, last_updated, export_link, latest_content)
-					 VALUES (?, ?, ?, ?, ?, ?)",
-					1,
+					"INSERT INTO documents (
+						doc_id, name, last_updated, export_link, latest_content, owner_username
+					) VALUES (?, ?, ?, ?, ?, ?)",
 					doc_id,
 					name,
 					modified_time,
 					export_link,
-					initial_content
+					new_content,
+					owner_username
 				)
 				.execute(pool)
 				.await?;
 
 				let new_doc_id = res.last_insert_rowid();
 
-				// Insert baseline revision
 				sqlx::query!(
 					"INSERT INTO document_revisions (
 						document_id, revision_time, content, diff, added_words, deleted_words
 					) VALUES (?, ?, ?, ?, ?, ?)",
 					new_doc_id,
 					modified_time,
-					initial_content,
-					"", // no diff
+					new_content,
+					"", // no diff for initial version
 					0,
 					0
 				)

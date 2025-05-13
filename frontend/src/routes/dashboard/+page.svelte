@@ -5,14 +5,14 @@
   import { base } from '$app/paths';
   import { logout, checkSession } from '$lib/api/auth';
 
-  import { fetchDocs, addDoc, fetchRevisions } from '$lib/api/docs';
+  import { fetchDocs, fetchRevisions } from '$lib/api/docs';
   import type { Doc, Revision } from '$lib/api/docs';
   
   import RevisionMiniPlot from '$lib/RevisionMiniPlot.svelte';
+  import SearchOverlay from '$lib/SearchOverlay.svelte';
   
   let docs: Doc[] = [];
   
-  let newDocId = '';
   let visibleRevisions = new Map();
   let expandedDocs = new Set();
   
@@ -35,12 +35,6 @@
 		  console.error("Failed to parse diff JSON:", e);
 		  return [];
 	  }
-  }
-
-  async function addDocHandler() {
-	await addDoc(newDocId);
-	newDocId = '';
-	docs = await fetchDocs();
   }
   
   async function fetchDocsHandler() {
@@ -86,15 +80,12 @@
   <!-- Sidebar -->
   <div class="w-64 bg-gray-100 p-4 border-r border-gray-300">
 	<h1 class="text-2xl font-bold mb-6">📄 Monitored Docs</h1>
-	<form on:submit|preventDefault={addDoc} class="space-y-4">
-	  <Input bind:value={newDocId} placeholder="Google Doc ID" />
-	  <Button type="submit" color="blue">Add Document</Button>
-	  <Button color="light" on:click={logout}>Logout</Button>
-	</form>
+	<Button color="light" on:click={logout}>Logout</Button>
+	<SearchOverlay />
   </div>
 
   <!-- Main Content -->
-  <div class="flex-1 p-6 overflow-auto">
+  <div class="flex-1 p-6 overflow-auto relative">
 	<Table>
 	  <table class="w-full text-sm text-left text-gray-500">
 		<thead class="text-xs text-gray-700 uppercase bg-gray-50">
@@ -108,9 +99,9 @@
 		<tbody>
 		  {#each docs as doc}
 			<tr class="bg-white border-b">
-			  <td class="px-6 py-4"><strong>{doc.name}</strong><br /></td>
-			  <td class="px-6 py-4"><RevisionMiniPlot revisions={doc.revision_summary ?? []} /></td>
-			  <td class="px-6 py-4">{formatTime(doc.last_updated)}</td>
+			  <td class="px-6 py-4 max-w-80"><strong>{doc.name}</strong><br /></td>
+			  <td class="px-6"><RevisionMiniPlot revisions={doc.revision_summary ?? []} /></td>
+			  <td class="px-6 py-4 max-w-40">{formatTime(doc.last_updated)}</td>
 			  <td class="px-6 py-4">
 				<Button size="xs" on:click={() => fetchRevisionsHandler(doc.doc_id)} color="blue" class="mt-1">
 				  {expandedDocs.has(doc.doc_id) ? "Hide Revisions" : "View Revisions"}

@@ -1,5 +1,3 @@
-// Simplified example, can use oauth2 crate if desired
-
 use std::{io::Write, fs::File};
 use tiny_http::{Server, Response};
 
@@ -8,9 +6,10 @@ async fn main() {
 	
 	dotenv::dotenv().ok();
 	
-	//dotenv::from_path("/etc/docwatch/.env")
-	//	.or_else(|_| dotenv::dotenv())
-	//	.expect("Could not load .env from /etc/docwatch or current directory");
+	if std::env::var("ADMIN_TOKEN").is_err() {
+		// Try fallback path (e.g., used in production)
+		let _ = dotenv::from_path("/etc/docwatch/.env");
+	}
 	
 	let client_id = std::env::var("GOOGLE_CLIENT_ID").expect("Missing GOOGLE_CLIENT_ID");
 	let client_secret = std::env::var("GOOGLE_CLIENT_SECRET").expect("Missing GOOGLE_CLIENT_SECRET");
@@ -25,7 +24,7 @@ async fn main() {
 	);
 	
 	if webbrowser::open(&auth_url).is_err() {
-		println!("\n🔗 Please open the following URL in your browser manually:\n\n{}\n", auth_url);
+		println!("\nPlease open the following URL in your browser manually:\n\n{}\n", auth_url);
 	}
 
 	println!("Waiting for OAuth callback...");
@@ -53,7 +52,7 @@ async fn main() {
 				.await
 				.unwrap();
 
-			let mut file = File::create("google_token.json").unwrap();
+			let mut file = File::create("/opt/docwatch/google_token.json").unwrap();
 			file.write_all(res.as_bytes()).unwrap();
 
 			request.respond(Response::from_string("Token saved. You can close this window.")).unwrap();
@@ -61,5 +60,5 @@ async fn main() {
 		}
 	}
 
-	println!("✅ Token saved to google_token.json");
+	println!("Token saved to google_token.json");
 }

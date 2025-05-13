@@ -1,4 +1,4 @@
-use axum::{extract::{State, Json}, response::IntoResponse, http::StatusCode};
+use axum::{extract::{State, Json, Query}, response::IntoResponse, http::StatusCode};
 use serde::{Deserialize, Serialize};
 use sqlx::SqlitePool;
 use crate::state::AppState;
@@ -6,13 +6,27 @@ use tower_cookies::{Cookies};
 use axum::extract::Path;
 
 use crate::poller::OwnedWordChange;
-use crate::google_api::{get_doc_info, add_docwatch_property};
+use crate::google_api::{add_docwatch_property}; //unused but keep for later in case useful
+
+#[derive(Deserialize)]
+pub struct DocQuery {
+	q: Option<String>,
+}
 
 #[derive(Serialize)]
 struct RevisionSummary {
 	revision_time: String,
 	added_words: Option<i64>,
 	deleted_words: Option<i64>,
+}
+
+#[derive(sqlx::FromRow)]
+struct DocRecord {
+	id: i64,
+	doc_id: String,
+	name: String,
+	last_updated: String,
+	owner_username: String,
 }
 
 #[derive(Serialize)]
@@ -24,7 +38,7 @@ struct DocInfo {
 }
 
 #[derive(Deserialize)]
-pub struct NewDoc {
+pub struct AddDocRequest {
 	doc_id: String,
 }
 
@@ -53,29 +67,60 @@ pub async fn get_user_id_from_cookie(
 pub async fn get_docs(
 	State(state): State<AppState>,
 	cookies: Cookies,
+	Query(params): Query<DocQuery>,
 ) -> impl IntoResponse {
 	match get_user_id_from_cookie(&state.db, &cookies).await {
 		Ok(user_id) => {
-			// Fetch the user's docs
-			let raw_docs = sqlx::query!(
-				"SELECT id, doc_id, name, last_updated FROM documents WHERE user_id = ?",
-				user_id
-			)
-			.fetch_all(&state.db)
-			.await
-			.unwrap_or_else(|_| vec![]);
+			let q = params.q.as_deref().unwrap_or("").to_lowercase();
 
-			// Now enrich each doc with its revision summary
-			let mut docs_with_summaries = Vec::with_capacity(raw_docs.len());
+			// Fetch documents depending on search query
+			let docs: Vec<DocRecord> = if !q.is_empty() {
+				let wildcard = format!("%{}%", q);
+				sqlx::query_as!(
+					DocRecord,
+					r#"
+					SELECT d.id, d.doc_id, d.name, d.last_updated, d.owner_username
+					FROM documents d
+					WHERE LOWER(d.doc_id) LIKE ? OR LOWER(d.name) LIKE ? OR LOWER(d.owner_username) LIKE ?
+					ORDER BY d.last_updated DESC
+					LIMIT 20
+					"#,
+					wildcard,
+					wildcard,
+					wildcard
+				)
+				.fetch_all(&state.db)
+				.await
+				.unwrap_or_else(|_| vec![])
+			} else {
+				sqlx::query_as!(
+					DocRecord,
+					r#"
+					SELECT d.id, d.doc_id, d.name, d.last_updated, d.owner_username
+					FROM user_documents ud
+					JOIN documents d ON ud.document_id = d.id
+					WHERE ud.user_id = ?
+					"#,
+					user_id
+				)
+				.fetch_all(&state.db)
+				.await
+				.unwrap_or_else(|_| vec![])
+			};
 
-			for doc in raw_docs {
+			// Enrich with revision summaries
+			let mut docs_with_summaries = Vec::with_capacity(docs.len());
+
+			for doc in docs {
 				let revisions = sqlx::query_as!(
 					RevisionSummary,
-					"SELECT revision_time, added_words, deleted_words
-					 FROM document_revisions
-					 WHERE document_id = ?
-					 ORDER BY revision_time DESC
-					 LIMIT 100",
+					r#"
+					SELECT revision_time, added_words, deleted_words
+					FROM document_revisions
+					WHERE document_id = ?
+					ORDER BY revision_time DESC
+					LIMIT 100
+					"#,
 					doc.id
 				)
 				.fetch_all(&state.db)
@@ -87,6 +132,7 @@ pub async fn get_docs(
 					name: doc.name,
 					last_updated: doc.last_updated,
 					revision_summary: revisions,
+					// Optionally add doc.owner_name here if you extend DocInfo
 				});
 			}
 
@@ -96,48 +142,39 @@ pub async fn get_docs(
 	}
 }
 
-// TODO: Remove
-// this is a function for adding a document in the UI, not really needed...
 pub async fn add_doc(
 	State(state): State<AppState>,
 	cookies: Cookies,
-	Json(payload): Json<NewDoc>,
+	Json(payload): Json<AddDocRequest>,
 ) -> impl IntoResponse {
-	match get_user_id_from_cookie(&state.db, &cookies).await {
-		Ok(user_id) => {
-			// Step 0: Check if doc already exists
-			let exists = sqlx::query!("SELECT id FROM documents WHERE doc_id = ?", payload.doc_id)
-				.fetch_optional(&state.db)
-				.await
-				.unwrap_or(None);  // ✅ use unwrap_or to avoid `?`
+	let user_id = match get_user_id_from_cookie(&state.db, &cookies).await {
+		Ok(uid) => uid,
+		Err(code) => return (code, "Unauthorized").into_response(),
+	};
 
-			if exists.is_some() {
-				return (StatusCode::CONFLICT, "Document already added").into_response();
-			}
+	// Look up internal document ID
+	let doc = sqlx::query!(
+		"SELECT id FROM documents WHERE doc_id = ?",
+		payload.doc_id
+	)
+	.fetch_optional(&state.db)
+	.await;
 
-			// Step 1: Fetch name + modifiedTime in one call
-			if let Ok((name, modified_time)) = get_doc_info(&payload.doc_id).await {
-				// Step 2: Insert into DB
-				let _ = sqlx::query("INSERT INTO documents (user_id, doc_id, name, last_updated) VALUES (?, ?, ?, ?)")
-					.bind(user_id)
-					.bind(&payload.doc_id)
-					.bind(name)
-					.bind(modified_time)
-					.execute(&state.db)
-					.await;
+	let doc_id = match doc {
+		Ok(Some(row)) => row.id,
+		_ => return (StatusCode::NOT_FOUND, "Document not found").into_response(),
+	};
 
-				// Step 3: Add docwatch tag
-				if let Err(e) = add_docwatch_property(&payload.doc_id).await {
-					eprintln!("⚠️ Failed to tag file: {:?}", e);
-				}
+	// Add to user's watchlist (idempotent insert)
+	let _ = sqlx::query!(
+		"INSERT OR IGNORE INTO user_documents (user_id, document_id) VALUES (?, ?)",
+		user_id,
+		doc_id
+	)
+	.execute(&state.db)
+	.await;
 
-				"Added".into_response()
-			} else {
-				(StatusCode::BAD_REQUEST, "Document not accessible").into_response()
-			}
-		}
-		Err(code) => (code, "Unauthorized").into_response(),
-	}
+	(StatusCode::OK, "Document added").into_response()
 }
 
 pub async fn get_revisions(

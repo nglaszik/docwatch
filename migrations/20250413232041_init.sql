@@ -1,38 +1,41 @@
--- Create users table.
-create table if not exists users
-(
-	id integer primary key not null,
-	username text not null unique,
-	password text not null
+CREATE TABLE IF NOT EXISTS users (
+	id INTEGER PRIMARY KEY NOT NULL,
+	username TEXT NOT NULL UNIQUE,
+	password TEXT NOT NULL
 );
 
--- Create sessions table.
-CREATE TABLE sessions (
+CREATE TABLE IF NOT EXISTS sessions (
 	user_id INTEGER NOT NULL,
 	token TEXT PRIMARY KEY,
 	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- monitored documents table
 CREATE TABLE IF NOT EXISTS documents (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
-	user_id INTEGER NOT NULL,
 	doc_id TEXT NOT NULL UNIQUE,
 	last_updated TEXT NOT NULL,
 	name TEXT NOT NULL DEFAULT 'Untitled',
+	owner_username TEXT NOT NULL,
 	latest_content TEXT,
 	export_link TEXT,
-	created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-	FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+	created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE document_revisions (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  document_id INTEGER NOT NULL,
-  revision_time TEXT NOT NULL,
-  content TEXT NOT NULL,
-  diff TEXT,
-  added_words INTEGER DEFAULT 0,
-  deleted_words INTEGER DEFAULT 0,
-  FOREIGN KEY(document_id) REFERENCES documents(id)
+CREATE TABLE IF NOT EXISTS document_revisions (
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	document_id INTEGER NOT NULL,
+	revision_time TEXT NOT NULL,
+	content TEXT NOT NULL,
+	diff TEXT,
+	added_words INTEGER DEFAULT 0,
+	deleted_words INTEGER DEFAULT 0,
+	FOREIGN KEY(document_id) REFERENCES documents(id)
+);
+
+CREATE TABLE IF NOT EXISTS user_documents (
+	user_id INTEGER NOT NULL,
+	document_id INTEGER NOT NULL,
+	PRIMARY KEY (user_id, document_id),
+	FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+	FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE CASCADE
 );

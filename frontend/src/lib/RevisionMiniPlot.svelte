@@ -72,7 +72,6 @@
 			},
 			title: {
 			  display: true,
-			  text: 'Time',
 			  color: '#666',
 			  font: {
 				size: 10
@@ -85,7 +84,6 @@
 		  y: {
 			title: {
 			  display: true,
-			  text: 'Words',
 			  color: '#666',
 			  font: {
 				size: 10
