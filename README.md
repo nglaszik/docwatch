@@ -147,6 +147,8 @@ Before building and installing, set up the [Google API](#google-api-setup)
 To build and install:
 
 ```bash
+git clone git@github.com:nglaszik/docwatch.git
+cd docwatch
 make
 sudo make install
 ```
