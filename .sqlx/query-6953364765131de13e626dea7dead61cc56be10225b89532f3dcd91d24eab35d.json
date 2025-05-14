@@ -1,0 +1,44 @@
+{
+  "db_name": "SQLite",
+  "query": "\n\t\t\t\t\tSELECT d.id, d.doc_id, d.name, d.last_updated, d.owner_username\n\t\t\t\t\tFROM documents d\n\t\t\t\t\tWHERE LOWER(d.doc_id) LIKE ? OR LOWER(d.name) LIKE ? OR LOWER(d.owner_username) LIKE ?\n\t\t\t\t\tORDER BY d.last_updated DESC\n\t\t\t\t\tLIMIT 20\n\t\t\t\t\t",
+  "describe": {
+    "columns": [
+      {
+        "name": "id",
+        "ordinal": 0,
+        "type_info": "Int64"
+      },
+      {
+        "name": "doc_id",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "name",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "last_updated",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "owner_username",
+        "ordinal": 4,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "6953364765131de13e626dea7dead61cc56be10225b89532f3dcd91d24eab35d"
+}

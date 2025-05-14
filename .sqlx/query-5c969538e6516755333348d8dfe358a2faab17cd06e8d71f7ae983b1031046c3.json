@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE documents\n\t\t\t\t\t\t\t SET name = ?, last_updated = ?, latest_content = ?, export_link = ?, owner_username = ?\n\t\t\t\t\t\t\t WHERE id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 6
+    },
+    "nullable": []
+  },
+  "hash": "5c969538e6516755333348d8dfe358a2faab17cd06e8d71f7ae983b1031046c3"
+}

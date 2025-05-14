@@ -1,0 +1,32 @@
+{
+  "db_name": "SQLite",
+  "query": "\n\t\t\t\t\tSELECT revision_time, added_words, deleted_words\n\t\t\t\t\tFROM document_revisions\n\t\t\t\t\tWHERE document_id = ?\n\t\t\t\t\tORDER BY revision_time DESC\n\t\t\t\t\tLIMIT 100\n\t\t\t\t\t",
+  "describe": {
+    "columns": [
+      {
+        "name": "revision_time",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "added_words",
+        "ordinal": 1,
+        "type_info": "Int64"
+      },
+      {
+        "name": "deleted_words",
+        "ordinal": 2,
+        "type_info": "Int64"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      true,
+      true
+    ]
+  },
+  "hash": "cb0c2619b488a2a1bee04d2ab10f6f453ca4a5cdd3c65116272f0313241c892a"
+}

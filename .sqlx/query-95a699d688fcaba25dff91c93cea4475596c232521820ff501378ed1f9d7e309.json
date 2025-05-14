@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO document_revisions (\n\t\t\t\t\t\t\t\tdocument_id, revision_time, content, diff, added_words, deleted_words\n\t\t\t\t\t\t\t) VALUES (?, ?, ?, ?, ?, ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 6
+    },
+    "nullable": []
+  },
+  "hash": "95a699d688fcaba25dff91c93cea4475596c232521820ff501378ed1f9d7e309"
+}

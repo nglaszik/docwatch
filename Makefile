@@ -17,6 +17,9 @@ build:
 	@echo "Running local migrations on dev DB..."
 	DATABASE_URL=sqlite://$(DATABASE_PATH) sqlx migrate run
 
+	@echo "Preparing sqlx offline data..."
+	DATABASE_URL=sqlite://$(DATABASE_PATH) cargo sqlx prepare
+
 	@echo "Building frontend files..."
 	cd frontend && npm ci && npm run build
 

@@ -1,0 +1,32 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT id, last_updated, latest_content FROM documents WHERE doc_id = ?",
+  "describe": {
+    "columns": [
+      {
+        "name": "id",
+        "ordinal": 0,
+        "type_info": "Int64"
+      },
+      {
+        "name": "last_updated",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "latest_content",
+        "ordinal": 2,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      true,
+      false,
+      true
+    ]
+  },
+  "hash": "373b058991f6c6dbdd48538cd9693c1489462129a0bbe889561fbfb023b6a5a8"
+}
