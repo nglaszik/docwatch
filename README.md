@@ -156,7 +156,7 @@ sudo make install
 > - Move binaries and pages
 > - The service is not started since we must first authenticate
 
-Follow the [Post Installation Instructions](#4.-post-install-required-setup)
+Follow the [Post Installation Instructions](#4-post-install-required-setup)
 
 ---
 
