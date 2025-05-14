@@ -33,7 +33,7 @@ jobs:
       - name: Package release assets
         run: |
           mkdir release
-          cp -r frontend/build release/frontend
+          cp -r frontend/dist release/frontend
           cp target/release/docwatch* release/
           tar -czf docwatch-${{ github.ref_name }}.tar.gz -C release .
 
