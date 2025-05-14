@@ -34,7 +34,7 @@
   </div>
 
   <SearchOverlay
-    show={$showSearchOverlay}
+    open={$showSearchOverlay}
     onClose={() => showSearchOverlay.set(false)}
   />
 </div>

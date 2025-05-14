@@ -2,7 +2,7 @@
 
 **Docwatch** is a web app designed to replace traditional AI detectors by analyzing the **revision history** of Google Docs (and soon, OneDrive documents). Instead of using unreliable classifiers, Docwatch highlights *when* content was added and how documents evolve over time — giving instructors and reviewers a transparent view of writing patterns.
 
-Docwatch is developed to be installed on a server with minimal overhead. Users can then access the app via a browser.
+Docwatch is developed to be installed on any server with minimal overhead. Users can then access the app via a browser.
 
 Having a document be visible in Docwatch is as simple as a student sharing the document with the Docwatch service account.
 
@@ -53,12 +53,7 @@ cd docwatch-v1.0.0
 sudo ./install.sh
 ```
 
-This will:
-- Install the backend binaries to `/usr/local/bin`
-- Set up working directories at `/opt/docwatch`
-- Initialize an empty production database
-- Install frontend assets and migrations
-- The server is not running since you need to first set up authentication
+The server is not running yet since you need to first set up authentication
 
 ### 4. Post-install required setup
 
@@ -67,7 +62,8 @@ First, put your google client id and secret from earlier into `/etc/docwatch/.en
 Next, run the following commands:
 
 ```bash
-# 1. Authenticate with Google API (must run from command line in a GUI-enabled session. Install ThinLinc if needed)
+# 1. Authenticate with Google API
+#    Must run from command line in a GUI-enabled session (using either -X on ssh or install ThinLinc if needed)
 sudo docwatch-authctl
 
 # 2. Create your first user for login
@@ -79,13 +75,31 @@ sudo systemctl enable docwatch
 sudo systemctl restart docwatch
 ```
 
+You can now access Docwatch at http://localhost:3009/docwatch
+
 ---
+
+## Suggested Reverse Proxy
+
+To configure non-local access, setup apache, nginx, caddy, etc. to serve the website.
+
+Suggested nginx config:
+
+```
+location /docwatch/ {
+	proxy_pass http://127.0.0.1:3009;
+	proxy_http_version 1.1;
+	proxy_set_header Host $host;
+	proxy_set_header X-Real-IP $remote_addr;
+	proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+}
+```
 
 ## Adding Documents to Docwatch
 
 To add documents to Docwatch, someone must simply share the document with the service account, and Docwatch will automatically begin watching for revisions.
 
-Authenticated users can then search for shared documents and add them to their watchlist.
+Authenticated users can then search for shared documents in the app and add them to their watchlist.
 
 ---
 

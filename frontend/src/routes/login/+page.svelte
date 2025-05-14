@@ -30,7 +30,7 @@
 		<label for="password" class="block mb-1 font-medium text-gray-700">Password</label>
 		<Input id="password" type="password" bind:value={password} placeholder="Enter password" />
 	  </div>
-	  <Button type="submit" color="blue" class="w-full">Login</Button>
+	  <Button type="submit" color="primary" class="w-full">Login</Button>
 	  {#if error}
 		<p class="text-red-600 mt-2 text-center">{error}</p>
 	  {/if}

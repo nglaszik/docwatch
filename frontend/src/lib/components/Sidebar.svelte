@@ -22,10 +22,10 @@
   fetchDocsHandler();
 </script>
 
-<aside class="w-64 bg-gray-100 border-r border-gray-300 flex flex-col">
+<aside class="w-64 border-r border-gray-300 flex flex-col">
   <div class="flex items-center justify-between p-4">
     <h1 class="text-xl font-bold">Watched Docs</h1>
-    <Button size="xs" color="light" on:click={onShowSearch}>🔍</Button>
+    <Button size="xs" color="light" onclick={onShowSearch}>🔍</Button>
   </div>
   <nav class="flex-1 overflow-auto">
     {#each docs as doc}
@@ -40,6 +40,6 @@
     {/each}
   </nav>
   <div class="p-4">
-    <Button color="red" size="sm" on:click={handleLogout}>Logout</Button>
+    <Button color="primary" size="sm" onclick={handleLogout}>Logout</Button>
   </div>
 </aside>

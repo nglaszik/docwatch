@@ -52,17 +52,17 @@
 <DashboardLayout bind:currentDoc>
   <div class="p-6 space-y-6">
 	{#if $currentDoc}
-	  <div class="h-80 bg-gray-100 rounded flex items-center justify-center">
+	  <div class="h-80 rounded flex items-center justify-center">
 		<RevisionMiniPlot revisions={$currentDoc.revision_summary ?? []} large={true} />
 	  </div>
 
 	  <div class="space-y-4">
 		{#each revisions as rev}
-		  <div class="bg-white border rounded p-4">
-			<div class="text-sm font-medium text-gray-800 mb-1">
+		  <div class="border rounded p-4">
+			<div class="text-sm font-medium mb-1">
 			  {formatTime(rev.revision_time)} — {rev.added_words} words added, {rev.deleted_words} words deleted
 			</div>
-			<div class="overflow-y-auto bg-gray-50 border border-gray-300 rounded p-2 text-sm leading-snug" style="height: 30vh;">
+			<div class="overflow-y-auto border border-gray-300 rounded p-2 text-sm leading-snug" style="height: 30vh;">
 			  {#each groupDiffWords(rev.diff) as block}
 				{#if block.text === '\n'}
 				  <br />

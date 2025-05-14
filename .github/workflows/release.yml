@@ -35,12 +35,12 @@ jobs:
 
       - name: Package release assets
         run: |
-          mkdir release
-          cp -r frontend/dist release/frontend
-          cp -r migrations release/migrations
-          cp install.sh release/
-          cp target/release/docwatch* release/
-          tar -czf docwatch-${{ github.ref_name }}.tar.gz -C release .
+          mkdir -p release/docwatch-${{ github.ref_name }}
+          cp -r frontend/dist release/docwatch-${{ github.ref_name }}/frontend
+          cp -r migrations release/docwatch-${{ github.ref_name }}/migrations
+          cp install.sh release/docwatch-${{ github.ref_name }}/
+          cp target/release/docwatch* release/docwatch-${{ github.ref_name }}/
+          tar -czf docwatch-${{ github.ref_name }}.tar.gz -C release docwatch-${{ github.ref_name }}
 
       - name: Upload GitHub Release asset
         uses: softprops/action-gh-release@v2
