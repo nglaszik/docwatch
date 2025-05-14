@@ -1,31 +1,51 @@
 #!/bin/bash
+
 set -e
 
-INSTALL_DIR=/usr/local/bin
-WORK_DIR=/opt/docwatch
-ENV_PATH=/etc/docwatch/.env
-SERVICE_PATH=/etc/systemd/system/docwatch.service
-BINARY_NAME=docwatch
+# Configurable
+BINARY_NAME="docwatch"
+INSTALL_PREFIX="/usr/local/bin"
+FRONTEND_DIR="/opt/docwatch/frontend"
+SYSTEMD_SERVICE="/etc/systemd/system/docwatch.service"
+ENV_FILE="/etc/docwatch/.env"
 
-echo "📂 Creating working directory at $WORK_DIR..."
-mkdir -p "$WORK_DIR/data"
-chown -R www-data:www-data "$WORK_DIR"
+echo "Installing $BINARY_NAME..."
 
-echo "📦 Installing precompiled binary to $INSTALL_DIR..."
-install -Dm755 "./$BINARY_NAME" "$INSTALL_DIR/$BINARY_NAME"
+# 1. Install backend binary
+if [ -f "./$BINARY_NAME" ] || [ -f "./$BINARY_NAME.exe" ]; then
+    BIN_SRC="./$BINARY_NAME"
+    # Windows case (optional .exe extension handling)
+    if [ -f "./$BINARY_NAME.exe" ]; then
+        BIN_SRC="./$BINARY_NAME.exe"
+    fi
+    sudo install "$BIN_SRC" "$INSTALL_PREFIX/$BINARY_NAME"
+    echo "Installed backend binary to $INSTALL_PREFIX/$BINARY_NAME"
+else
+    echo "Error: Binary $BINARY_NAME not found in current directory."
+    exit 1
+fi
 
-echo "📄 Installing systemd service file to $SERVICE_PATH..."
-cat > "$SERVICE_PATH" <<EOF
+# 2. Install frontend static files
+if [ -d "./frontend" ]; then
+    sudo mkdir -p "$FRONTEND_DIR"
+    sudo cp -r ./frontend/* "$FRONTEND_DIR/"
+    echo "Copied frontend files to $FRONTEND_DIR"
+else
+    echo "Error: Frontend directory not found."
+    exit 1
+fi
+
+# 3. Install systemd service
+sudo tee "$SYSTEMD_SERVICE" > /dev/null <<EOF
 [Unit]
-Description=Docwatch Server
+Description=Docwatch Web App
 After=network.target
 
 [Service]
-ExecStart=$INSTALL_DIR/$BINARY_NAME
-WorkingDirectory=$WORK_DIR
-EnvironmentFile=$ENV_PATH
-Restart=always
-RestartSec=2
+ExecStart=$INSTALL_PREFIX/$BINARY_NAME
+WorkingDirectory=/opt/docwatch
+EnvironmentFile=$ENV_FILE
+Restart=on-failure
 User=www-data
 Group=www-data
 
@@ -33,18 +53,24 @@ Group=www-data
 WantedBy=multi-user.target
 EOF
 
-echo "📝 Creating environment file at $ENV_PATH..."
-mkdir -p "$(dirname "$ENV_PATH")"
-if [ ! -f "$ENV_PATH" ]; then
-  cat > "$ENV_PATH" <<EOF
+echo "Installed systemd service at $SYSTEMD_SERVICE"
+
+# 4. Ensure env file exists
+if [ ! -f "$ENV_FILE" ]; then
+    echo "Warning: $ENV_FILE does not exist. Creating a template."
+    sudo mkdir -p $(dirname "$ENV_FILE")
+    sudo tee "$ENV_FILE" > /dev/null <<EOF
+# Example .env file for Docwatch
 DATABASE_URL=sqlite://data/docwatch.db
 PORT=3009
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
 EOF
 fi
 
-echo "📡 Reloading and starting systemd service..."
-systemctl daemon-reexec
-systemctl enable docwatch
-systemctl restart docwatch
+# 5. Reload systemd, enable & start service
+sudo systemctl daemon-reload
+sudo systemctl enable docwatch
+sudo systemctl restart docwatch
 
-echo "✅ Docwatch installed and running at http://localhost:3000"
+echo "Docwatch installed and started successfully."
