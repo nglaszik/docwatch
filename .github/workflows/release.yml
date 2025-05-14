@@ -5,6 +5,9 @@ on:
     tags:
       - 'v*.*.*'
 
+permissions:
+  contents: write
+
 jobs:
   build-release:
     runs-on: ubuntu-latest
@@ -41,3 +44,4 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: docwatch-${{ github.ref_name }}.tar.gz
+          draft: ${{ endsWith(github.ref_name, '-test') }}
