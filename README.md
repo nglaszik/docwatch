@@ -10,21 +10,88 @@ This project is still heavily under development, so bugs are guaranteed.
 
 ---
 
-# Installation
+# Normal Installation
 
-For all users: Before installation, set up a Google Cloud project and enable API access.
+## Google API Setup
 
-For most users: Run the install script, which downloads and installs the pre-built binaries.
+Before installation, set up a Google Cloud project and enable API access. You’ll need to:
 
-For developers: Before building Docwatch, ensure your system has the prerequisites installed.
+### 1. Enable Google Drive API
+- Visit [https://console.cloud.google.com](https://console.cloud.google.com)
+- Create or select a project
+- Enable the **Google Drive API** for your project
 
-For all users: After installation, run docwatch-authctl with an accessible local web browser to complete OAuth setup, and docwatch-userctl to create a user (required)
+### 2. (Optional) Create a Service Account
+- Go to **IAM & Admin → Service Accounts**
+- Click "Create Service Account"
+
+### 3. Generate OAuth2 Credentials
+- Under “Clients,” create an **OAuth2 client ID**
+- Use type **Desktop App**
+- Write down your `client_id` and `client_secret` for later...
 
 ---
 
-# Development Prerequisites
+## Download and Install
 
-## System Dependencies
+### 1. Download the latest release
+Head to the [Releases](https://github.com/nglaszik/docwatch/releases) page and download the latest `.tar.gz` package for your system.
+
+Command line example: (Update the version)
+```bash
+curl -LO https://github.com/nglaszik/docwatch/releases/download/v1.0.0/docwatch-v1.0.0.tar.gz
+```
+
+### 2. Extract the release package
+```bash
+tar -xzf docwatch-v1.0.0.tar.gz
+cd docwatch-v1.0.0
+```
+
+### 3. Run the installer script
+```bash
+sudo ./install.sh
+```
+
+This will:
+- Install the backend binaries to `/usr/local/bin`
+- Set up working directories at `/opt/docwatch`
+- Initialize an empty production database
+- Install frontend assets and migrations
+- The server is not running since you need to first set up authentication
+
+### 4. Post-install required setup
+
+First, put your google client id and secret from earlier into `/etc/docwatch/.env`
+
+Next, run the following commands:
+
+```bash
+# 1. Authenticate with Google API (must run from command line in a GUI-enabled session. Install ThinLinc if needed)
+sudo docwatch-authctl
+
+# 2. Create your first user for login
+sudo docwatch-userctl
+
+# 3. Start service
+sudo systemctl daemon-reload
+sudo systemctl enable docwatch
+sudo systemctl restart docwatch
+```
+
+---
+
+## Adding Documents to Docwatch
+
+To add documents to Docwatch, someone must simply share the document with the service account, and Docwatch will automatically begin watching for revisions.
+
+Authenticated users can then search for shared documents and add them to their watchlist.
+
+---
+
+# Development Installation
+
+## Dependencies
 
 ### Ubuntu/Debian
 
@@ -35,7 +102,7 @@ sudo apt install build-essential libssl-dev pkg-config sqlite3
 
 ---
 
-## Rust
+### Rust
 
 Install the Rust toolchain:
 
@@ -51,7 +118,7 @@ rustup component add clippy rustfmt
 
 ---
 
-## Node + npm
+### Node + npm
 
 Make sure you have a recent version of Node.js and npm:
 
@@ -75,6 +142,8 @@ nvm install --lts
 
 ## Build/Install
 
+Before building and installing, set up the [Google API](#google-api-setup)
+
 To build and install:
 
 ```bash
@@ -85,15 +154,15 @@ sudo make install
 > This will:
 > - Build the app
 > - Move binaries and pages
-> - Start the docwatch service
+> - The service is not started since we must first authenticate
 
-The app will now be running (by default) at [http://localhost:3009](http://localhost:3009)
+Follow the [Post Installation Instructions](#4.-post-install-required-setup)
 
 ---
 
 ## Testing
 
-Once all dependencies are installed:
+You can make changes and test them by running the following:
 
 ```bash
 # Frontend
@@ -106,97 +175,18 @@ cargo run --bin docwatch
 
 ---
 
-## Starting the Service
+# Roadmap
 
-After installation, the service will automatically be started but can be managed with systemctl:
-
-```bash
-sudo systemctl status docwatch.service
-sudo systemctl restart docwatch.service
-```
-
----
-
-## Google API Setup
-
-This app requires access to the **Google Drive API**. You’ll need to:
-
-### 1. Enable Google Drive API
-- Visit [https://console.cloud.google.com](https://console.cloud.google.com)
-- Create or select a project
-- Enable the **Google Drive API** for your project
-
-### 2. (Optional) Create a Service Account
-- Go to **IAM & Admin → Service Accounts**
-- Click "Create Service Account"
-
-### 3. Generate OAuth2 Credentials
-- Under “Clients,” create an **OAuth2 client ID**
-- Use type **Desktop App**
-- Save your `client_id` and `client_secret`
-
-### 4. Add to Environment
-
-Create (or edit) the `.env` file used by the app:
-
-```ini
-GOOGLE_CLIENT_ID=your_client_id_here
-GOOGLE_CLIENT_SECRET=your_client_secret_here
-```
-
-> Place this file at `/etc/docwatch/.env`  
-> (The app reads it automatically on startup.)
-
----
-
-## Add a User
-
-Before running the app, run
-
-```bash
-docwatch-userctl
-```
-
-To add a user to the app's database
-
----
-
-## Initial OAuth Setup
-
-To authorize the app to access Google Drive:
-
-```bash
-docwatch-authctl
-```
-
-This will:
-- Open a browser window (or give you a URL if headless)
-- Ask you to log in with the service account or authorized Google user
-- Store your token in `google_token.json`
-
-After this, the app can begin polling documents!
-
----
-
-## Adding Documents to Docwatch
-
-To add documents to docwatch, someone must simply share the document with the service account, and Docwatch will automatically begin watching for revisions.
-
----
-
-## Roadmap
-
-- [x] Google Docs support
+- [x] Google docs & docx support
 - [x] Per-user document dashboards
 - [x] Revision diff visualization
-- [ ] Visualization of writing pace
+- [x] Visualization of writing pace
+- [x] Instructor dashboard for class-level views
 - [ ] OneDrive support (in progress)
-- [ ] Instructor dashboard for class-level views
-- [ ] PDF/CSV export of change history
 
 ---
 
-## Acknowledgments
+# Acknowledgments
 
 - [Axum](https://docs.rs/axum)
 - [Svelte](https://svelte.dev)
@@ -204,6 +194,6 @@ To add documents to docwatch, someone must simply share the document with the se
 
 ---
 
-## License
+# License
 
 MIT License — use, share, and build on it freely!
