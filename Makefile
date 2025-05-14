@@ -10,6 +10,10 @@ WORK_DIR=/opt/docwatch
 DATABASE_PATH=data/docwatch.db
 
 build:
+
+	@echo "Building frontend files..."
+	cd frontend && npm ci && npm run build
+
 	@echo "Ensuring dev database exists at $(DATABASE_PATH)..."
 	mkdir -p $(dir $(DATABASE_PATH))
 	[ -f $(DATABASE_PATH) ] || sqlite3 $(DATABASE_PATH) 'VACUUM;'
@@ -19,9 +23,6 @@ build:
 
 	@echo "Preparing sqlx offline data..."
 	DATABASE_URL=sqlite://$(DATABASE_PATH) cargo sqlx prepare
-
-	@echo "Building frontend files..."
-	cd frontend && npm ci && npm run build
 
 	@echo "Building Rust binaries..."
 	cargo build --release --bin $(BINARY_NAME)
