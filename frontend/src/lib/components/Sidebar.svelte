@@ -1,45 +1,56 @@
 <script lang="ts">
-  import { Button } from 'flowbite-svelte';
-  import { fetchDocs } from '$lib/api/docs';
-  import { logout } from '$lib/api/auth';
+  import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import { base } from '$app/paths';
-  import { page } from '$app/stores';
-
-  export let onShowSearch = () => {};
-
-  let docs = [];
-
-  async function fetchDocsHandler() {
-    docs = await fetchDocs();
-  }
-
-  async function handleLogout() {
-    await logout();
-    goto(`${base}/login`);
-  }
-
-  fetchDocsHandler();
+  import { page } from '$app/state';
+  import { Sidebar, SidebarGroup, SidebarItem, Button } from 'flowbite-svelte';
+  import { SearchOutline } from 'flowbite-svelte-icons';
+  import { fetchDocs } from '$lib/api/docs';
+  import { logout } from '$lib/api/auth';
+  import { docs } from '$lib/stores/docs';
+  
+  let { isOpen = false, closeSidebar = () => {}, openSearchOverlay = () => {} } = $props();
+  
+  // use this in addition to onMount for triggering reactivity in pages
+  let activeUrl = $state(page.url.pathname);
+  
+  // may want to create an await here too, or put this elsewhere... need to make sure that docs are loaded before revision miniplot is loaded. it's fine here since $docs is reactive anyway
+  
+  onMount(async () => {
+    docs.load();
+  });
+  
+  $effect(() => {
+    activeUrl = page.url.pathname;
+    docs.load();
+  });
+  
 </script>
 
-<aside class="w-64 border-r border-gray-300 flex flex-col">
-  <div class="flex items-center justify-between p-4">
-    <h1 class="text-xl font-bold">Watched Docs</h1>
-    <Button size="xs" color="light" onclick={onShowSearch}>🔍</Button>
-  </div>
-  <nav class="flex-1 overflow-auto">
-    {#each docs as doc}
-      <button
-        class="w-full text-left px-4 py-2 hover:bg-gray-200"
-        class:bg-gray-300={doc.doc_id === $page.params.doc_id}
-        class:font-semibold={doc.doc_id === $page.params.doc_id}
-        on:click={() => goto(`${base}/doc/${doc.doc_id}`)}
+<Sidebar
+  {activeUrl}
+  isOpen={isOpen}
+  closeSidebar={closeSidebar}
+  backdrop={false}
+  activeClass="sidebar-active flex items-center p-2 rounded-lg"
+  nonActiveClass="sidebar-inactive flex items-center p-2 rounded-lg"
+  position="absolute"
+  class="h-full"
+>
+  <!-- Search -->
+  <SidebarGroup>
+    <Button onclick={openSearchOverlay}>Search</Button>
+  </SidebarGroup>
+
+  <!-- Watched Docs -->
+  <SidebarGroup label="Watched Docs">
+    {#each $docs as doc}
+      <SidebarItem
+        href={`${base}/docs/${doc.doc_id}`}
+        label={doc.name}
       >
-        {doc.name}
-      </button>
+      </SidebarItem>
     {/each}
-  </nav>
-  <div class="p-4">
-    <Button color="primary" size="sm" onclick={handleLogout}>Logout</Button>
-  </div>
-</aside>
+  </SidebarGroup>
+</Sidebar>
+

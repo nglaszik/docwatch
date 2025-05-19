@@ -1,12 +1,12 @@
 use axum::{extract::{State, Json, Query}, response::IntoResponse, http::StatusCode};
 use serde::{Deserialize, Serialize};
-use sqlx::SqlitePool;
 use crate::state::AppState;
 use tower_cookies::{Cookies};
 use axum::extract::Path;
 
 use crate::poller::OwnedWordChange;
 use crate::google_api::{add_docwatch_property}; //unused but keep for later in case useful
+use crate::routes::auth::get_user_id_from_cookie;
 
 #[derive(Deserialize)]
 pub struct DocQuery {
@@ -35,33 +35,12 @@ struct DocInfo {
 	name: String,
 	last_updated: String,
 	revision_summary: Vec<RevisionSummary>,
+	owner_username: String,
 }
 
 #[derive(Deserialize)]
 pub struct AddDocRequest {
 	doc_id: String,
-}
-
-pub async fn get_user_id_from_cookie(
-	db: &SqlitePool,
-	cookies: &Cookies,
-) -> Result<i64, StatusCode> {
-	if let Some(cookie) = cookies.get("session") {
-		let token = cookie.value();
-		let user_id = sqlx::query_scalar!(
-			"SELECT user_id FROM sessions WHERE token = ?",
-			token
-		)
-		.fetch_optional(db)
-		.await
-		.map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-
-		if let Some(uid) = user_id {
-			return Ok(uid);
-		}
-	}
-
-	Err(StatusCode::UNAUTHORIZED)
 }
 
 pub async fn get_docs(
@@ -93,6 +72,7 @@ pub async fn get_docs(
 				.await
 				.unwrap_or_else(|_| vec![])
 			} else {
+				// return all documents that the user is watching
 				sqlx::query_as!(
 					DocRecord,
 					r#"
@@ -131,8 +111,8 @@ pub async fn get_docs(
 					doc_id: doc.doc_id,
 					name: doc.name,
 					last_updated: doc.last_updated,
+					owner_username: doc.owner_username,
 					revision_summary: revisions,
-					// Optionally add doc.owner_name here if you extend DocInfo
 				});
 			}
 

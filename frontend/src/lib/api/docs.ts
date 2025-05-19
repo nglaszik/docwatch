@@ -11,6 +11,7 @@ export type Doc = {
   name: string;
   last_updated: string;
   revision_summary: RevisionSummary[];
+  owner_username: string;
 };
 
 export type Revision = {

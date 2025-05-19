@@ -1,6 +1,7 @@
 <script lang="ts">
   import { Modal, Input, Button } from 'flowbite-svelte';
   import { searchDocs, addToWatchlist } from '$lib/api/docs';
+  import { docs } from '$lib/stores/docs';
 
   let { open = false, onClose = () => {} } = $props();
 
@@ -13,21 +14,21 @@
   
   async function handleAdd(docId: string) {
     await addToWatchlist(docId);
+    await docs.load(true); // added this!
   }
   
   $effect(() => {
-    console.log("something is happening: ", query);
+    
     if (query.length >= 2) {
       handleSearch();
     } else {
       results = [];
     }
-  });
-  
-  $effect(() => {
+    
     if (!open) {
       onClose();
     }
+    
   });
 
 </script>
