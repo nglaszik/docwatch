@@ -162,11 +162,13 @@ pub async fn get_revisions(
 	Path(doc_id): Path<String>,
 ) -> impl IntoResponse {
 	let revisions = sqlx::query!(
-		"SELECT r.revision_time, r.diff
-		 FROM document_revisions r
-		 JOIN documents d ON r.document_id = d.id
-		 WHERE d.doc_id = ?
-		 ORDER BY r.revision_time DESC",
+		r#"
+		SELECT r.revision_time, r.diff, r.added_words, r.deleted_words
+		FROM document_revisions r
+		JOIN documents d ON r.document_id = d.id
+		WHERE d.doc_id = ?
+		ORDER BY r.revision_time DESC
+		"#,
 		doc_id
 	)
 	.fetch_all(&state.db)
@@ -177,22 +179,11 @@ pub async fn get_revisions(
 			let summaries = rows
 				.into_iter()
 				.map(|r| {
-					let diff_str = r.diff.unwrap_or_else(|| "[]".to_string());
-
-					// Try to parse the diff JSON
-					let added_words = serde_json::from_str::<Vec<OwnedWordChange>>(&diff_str)
-						.map(|changes| {
-							changes
-								.into_iter()
-								.filter(|c| matches!(c, OwnedWordChange::Added(_)))
-								.count()
-						})
-						.unwrap_or(0); // fallback if deserialization fails
-
 					serde_json::json!({
 						"revision_time": r.revision_time,
-						"diff": diff_str,
-						"added_words": added_words
+						"diff": r.diff.unwrap_or_else(|| "[]".to_string()),
+						"added_words": r.added_words.unwrap_or(0),
+						"deleted_words": r.deleted_words.unwrap_or(0),
 					})
 				})
 				.collect::<Vec<_>>();

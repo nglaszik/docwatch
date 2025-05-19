@@ -2,8 +2,8 @@
 
 export type RevisionSummary = {
   revision_time: string;
-  added_chars: number;
-  deleted_chars: number;
+  added_words: number;
+  deleted_words: number;
 };
 
 export type Doc = {
@@ -16,8 +16,8 @@ export type Doc = {
 
 export type Revision = {
   revision_time: string;
-  added_chars: number;
-  deleted_chars: number;
+  added_words: number;
+  deleted_words: number;
   diff: string;
 };
 
