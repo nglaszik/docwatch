@@ -1,5 +1,5 @@
 use serde::Deserialize;
-use sqlx::SqlitePool; // or Postgres/MySQL depending on your backend
+use sqlx::SqlitePool;
 
 #[derive(Deserialize)]
 #[serde(tag = "type", content = "text")]

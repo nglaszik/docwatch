@@ -47,15 +47,15 @@
   <div class="p-6 space-y-6">
     <div class="w-full max-w-screen-lg space-y-6">
       <div class="w-full h-80 rounded flex items-center justify-center">
-        <RevisionMiniPlot docId={$page.params.doc_id ?? ''} large={true} />
+        <RevisionMiniPlot docId={$page.params.doc_id ?? ''} />
       </div>
       <div class="w-full mx-auto p-4 space-y-4">
         {#each revisions as rev}
           <div class="border rounded p-4">
-            <div class="text-sm font-medium mb-1">
+            <div class="text-sm font-medium mb-1 text-black dark:text-white">
               {formatTime(rev.revision_time)} — {rev.added_words} words added, {rev.deleted_words} words deleted
             </div>
-            <div class="overflow-y-auto border border-gray-300 rounded p-2 text-sm leading-snug" style="height: 30vh;">
+            <div class="overflow-y-auto border rounded p-2 text-sm leading-snug" style="height: 30vh;">
               {#each groupDiffWords(rev.diff) as block}
                 {#if block.text === '\n'}
                   <br />
@@ -64,7 +64,7 @@
                 {:else if block.type === 'del'}
                   <span class="text-red-600 line-through">{block.text}</span>
                 {:else}
-                  <span>{block.text}</span>
+                  <span class="text-black dark:text-white">{block.text}</span>
                 {/if}
               {/each}
             </div>

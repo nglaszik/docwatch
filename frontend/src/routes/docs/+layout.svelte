@@ -3,7 +3,7 @@
   
   import { onMount } from 'svelte';
   
-  import { Navbar, NavBrand, NavLi, NavUl, NavHamburger, Avatar, Dropdown, DropdownItem, DropdownHeader, DropdownGroup, uiHelpers, SidebarButton } from "flowbite-svelte";
+  import { Navbar, NavBrand, NavLi, NavUl, NavHamburger, Avatar, Dropdown, DropdownItem, DropdownHeader, DropdownGroup, uiHelpers, SidebarButton, DarkMode } from "flowbite-svelte";
   
   import Sidebar from '$lib/components/Sidebar.svelte';
   import SearchOverlay from '$lib/components/SearchOverlay.svelte';
@@ -52,13 +52,18 @@
     <img src="/docwatch/docwatch_icon.svg" class="me-3 h-6 sm:h-9" alt="Docwatch Logo" />
     <span class="self-center text-xl font-semibold whitespace-nowrap dark:text-white">Docwatch</span>
   </NavBrand>
-  <Avatar id="avatar-menu">{initial}</Avatar>
-  <Dropdown placement="bottom" triggeredBy="#avatar-menu">
-    <DropdownHeader>
-      <span class="block truncate text-sm font-medium">{username}</span>
-    </DropdownHeader>
-    <DropdownItem onclick={handleLogout}>Sign out</DropdownItem>
-  </Dropdown>
+  <div class="ml-auto flex items-center gap-4">
+    <DarkMode class="text-primary-500 dark:text-primary-600 border dark:border-gray-800" />
+    <Avatar id="avatar-menu">
+      <span class="select-none cursor-pointer">{initial}</span>
+    </Avatar>
+    <Dropdown placement="bottom" triggeredBy="#avatar-menu" simple>
+      <DropdownHeader>
+        <span class="block truncate text-sm font-medium">{username}</span>
+      </DropdownHeader>
+      <DropdownItem onclick={handleLogout}>Sign out</DropdownItem>
+    </Dropdown>
+  </div>
 </Navbar>
 
 <SidebarButton onclick={sidebarUi.toggle} class="mb-4" />

@@ -39,7 +39,7 @@
 >
   <!-- Search -->
   <SidebarGroup>
-    <Button onclick={openSearchOverlay}>Search</Button>
+    <Button onclick={openSearchOverlay}>Add Document</Button>
   </SidebarGroup>
 
   <!-- Watched Docs -->
