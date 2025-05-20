@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n\t\t\t\tUPDATE document_revisions\n\t\t\t\tSET added_words = ?, deleted_words = ?\n\t\t\t\tWHERE id = ?\n\t\t\t\t",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "695ecd4f5c2e62f7da774f8cb4099d0eb44b2a55677019da392a7241fd7787ff"
+}

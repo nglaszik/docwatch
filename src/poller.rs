@@ -48,9 +48,9 @@ pub fn count_words_from_diff<'a>(diff: &[WordChange<'a>]) -> (usize, usize) {
 
 	for change in diff {
 		match change {
-			WordChange::Added(_) => added += 1,
-			WordChange::Removed(_) => removed += 1,
-			WordChange::Unchanged(_) => {}
+			WordChange::Added(w) if !w.trim().is_empty() => added += 1,
+			WordChange::Removed(w) if !w.trim().is_empty() => removed += 1,
+			_ => {}
 		}
 	}
 

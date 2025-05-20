@@ -14,6 +14,7 @@
   $effect(() => {
     
     //should ensure that docs is populated... but maybe works for now with reactivity? since i have $? whenever docs is reloaded, the chart should too
+    // hmm reactivity is still a bit weird. need to refresh page to get things loaded properly when new revision is present
     
     const revisions = $docs.find(d => d.doc_id === docId)?.revision_summary ?? [];
     
