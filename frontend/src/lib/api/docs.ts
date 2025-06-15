@@ -1,24 +1,22 @@
 // src/lib/api/docs.ts
 
-export type RevisionSummary = {
-  revision_time: string;
-  added_words: number;
-  deleted_words: number;
-};
-
 export type Doc = {
   doc_id: string;
   name: string;
   last_updated: string;
-  revision_summary: RevisionSummary[];
   owner_username: string;
 };
 
 export type Revision = {
+  id: id;
   revision_time: string;
   added_words: number;
   deleted_words: number;
-  diff: string;
+};
+
+export type DiffBlock = {
+  type: 'add' | 'del' | 'neutral';
+  text: string;
 };
 
 export async function fetchDocs(): Promise<Doc[]> {
@@ -36,6 +34,12 @@ export async function searchDocs(query: string): Promise<Doc[]> {
 export async function fetchRevisions(docId: string): Promise<Revision[]> {
   const res = await fetch(`/docwatch/api/docs/${docId}/revisions`);
   if (!res.ok) throw new Error('Failed to fetch revisions');
+  return await res.json();
+}
+
+export async function fetchDiff(revId: number): Promise<DiffBlock[]> {
+  const res = await fetch(`/docwatch/api/diffs/${revId}`);
+  if (!res.ok) throw new Error('Failed to fetch diff');
   return await res.json();
 }
 

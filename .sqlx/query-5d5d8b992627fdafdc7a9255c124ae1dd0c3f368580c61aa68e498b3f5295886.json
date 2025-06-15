@@ -1,15 +1,15 @@
 {
   "db_name": "SQLite",
-  "query": "\n\t\tSELECT r.revision_time, r.diff, r.added_words, r.deleted_words\n\t\tFROM document_revisions r\n\t\tJOIN documents d ON r.document_id = d.id\n\t\tWHERE d.doc_id = ?\n\t\tORDER BY r.revision_time DESC\n\t\t",
+  "query": "\n\t\tSELECT r.id, r.revision_time, r.added_words, r.deleted_words\n\t\tFROM document_revisions r\n\t\tJOIN documents d ON r.document_id = d.id\n\t\tWHERE d.doc_id = ?\n\t\tORDER BY r.revision_time DESC\n\t\t",
   "describe": {
     "columns": [
       {
-        "name": "revision_time",
+        "name": "id",
         "ordinal": 0,
-        "type_info": "Text"
+        "type_info": "Int64"
       },
       {
-        "name": "diff",
+        "name": "revision_time",
         "ordinal": 1,
         "type_info": "Text"
       },
@@ -29,10 +29,10 @@
     },
     "nullable": [
       false,
-      true,
+      false,
       true,
       true
     ]
   },
-  "hash": "20935693557fef6bbeb903ccd382dfe3c6bda86cc0b5f211794b08ccfaa922e2"
+  "hash": "5d5d8b992627fdafdc7a9255c124ae1dd0c3f368580c61aa68e498b3f5295886"
 }

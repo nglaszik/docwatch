@@ -46,7 +46,8 @@
         <h3 class="text-lg font-semibold">{doc.name}</h3>
         <p class="text-sm">ID: {doc.doc_id}</p>
         <p class="text-sm">Owner: {doc.owner_username}</p>
-        <Button size="xs" color="primary" class="mt-2" onclick={() => handleAdd(doc.doc_id)}>Watch</Button>
+        <p class="text-sm">Last Updated: {doc.last_updated}</p>
+        <Button size="xs" color="primary" class="mt-2" onclick={() => handleAdd(doc.doc_id)}>Add to Watchlist</Button>
       </div>
     {/each}
   

@@ -7,7 +7,7 @@
   import { docs } from '$lib/stores/docs';
 
   // reactivity
-  let { docId = '' } = $props();
+  let { revisions = [], docId = '' } = $props();
   let mode = $state('Time Series – Added'); // Time Series – Added, Time Series – Deleted, Histogram – Added, Histogram – Deleted
   let range = $state('All'); // today, week, month, year, all
 
@@ -23,8 +23,6 @@
   };
   
   function exportRevisionCSV(): string {
-    
-    const revisions = $docs.find(d => d.doc_id === docId)?.revision_summary ?? [];
     
     const rows = [
       'Time,Added Words,Deleted Words'
@@ -45,8 +43,6 @@
   }
 
   $effect(() => {
-    
-    const revisions = $docs.find(d => d.doc_id === docId)?.revision_summary ?? [];
     
     if (!canvasEl) return;
 
@@ -164,22 +160,39 @@
       title = 'Words over Time';
     } else {
       const histData = mode === 'Histogram – Added' ? addedWords : deletedWords;
-      const buckets: { [key: number]: number } = {};
+      const binSize = 10;
+      
+      // Create a bucket count
+      const buckets: { [bin: number]: number } = {};
+      let maxBin = 0;
       for (const w of histData) {
-        const bin = Math.floor(w / 10) * 10;
+        const bin = Math.floor(w / binSize);
         buckets[bin] = (buckets[bin] || 0) + 1;
+        if (bin > maxBin) maxBin = bin;
       }
-      const sortedBins = Object.keys(buckets).map(Number).sort((a, b) => a - b);
-      chartData = {
-        labels: sortedBins.map(b => `${b}-${b + 9}`),
-        datasets: [{
-          label: mode === 'Histogram – Added' ? 'Added Words (Histogram)' : 'Deleted Words (Histogram)',
-          data: sortedBins.map(b => buckets[b]),
-          backgroundColor: mode === 'Histogram – Added'
-            ? 'rgba(34, 197, 94, 0.6)'
-            : 'rgba(239, 68, 68, 0.6)'
-        }]
-      };
+      
+      // Generate x/y points for Chart.js scatter/line style with bars
+      const x_vals: number[] = [];
+      const y_vals: number[] = [];
+      for (let i = 0; i <= maxBin; i++) {
+        x_vals.push(i * binSize + binSize / 2); // center of bin
+        y_vals.push(buckets[i] || 0); // default to 0 for gaps
+      }
+      
+     const data = x_vals.map((x, i) => ({ x, y: y_vals[i] }));
+     
+     chartData = {
+       datasets: [{
+         label: mode === 'Histogram – Added' ? 'Added Words (Histogram)' : 'Deleted Words (Histogram)',
+         data,
+         backgroundColor: mode === 'Histogram – Added'
+           ? 'rgba(34, 197, 94, 0.6)'
+           : 'rgba(239, 68, 68, 0.6)',
+         barPercentage: 1.0,
+         categoryPercentage: 1.0,
+       }]
+     };
+     
       title = 'Words per Revision';
     }
 
@@ -193,7 +206,18 @@
         plugins: {
           legend: { display: true },
           tooltip: { enabled: true },
-          title: { display: true, text: title }
+          title: { display: true, text: title },
+          zoom: {
+            zoom: {
+              wheel: {
+                enabled: true,
+              },
+              pinch: {
+                enabled: true
+              },
+              mode: 'x',
+            }
+          }
         },
         scales: {
           x: mode.startsWith('Time')
@@ -226,8 +250,10 @@
               }
             }
           : {
-              type: 'category',
+              type: 'linear',
+              offset: false,
               ticks: {
+                stepSize: 10,
                 font: { size: 8 }
               },
               title: {
@@ -236,7 +262,7 @@
                 color: '#666',
                 font: { size: 10 }
               },
-              grid: { display: false }
+              grid: { display: false, offset: false }
             },
           y: {
             beginAtZero: true,

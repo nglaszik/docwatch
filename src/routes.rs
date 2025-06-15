@@ -14,5 +14,6 @@ pub fn routes() -> Router<AppState> {
 		.nest("/admin", admin::routes())
 		.route("/docs", get(docs::get_docs).post(docs::add_doc))
 		.route("/docs/:doc_id/revisions", get(docs::get_revisions))
+		.route("/diffs/:rev_id", get(docs::get_diff))
 }
 

@@ -13,14 +13,7 @@ pub struct DocQuery {
 	q: Option<String>,
 }
 
-#[derive(Serialize)]
-struct RevisionSummary {
-	revision_time: String,
-	added_words: Option<i64>,
-	deleted_words: Option<i64>,
-}
-
-#[derive(sqlx::FromRow)]
+#[derive(sqlx::FromRow, Serialize)]
 struct DocRecord {
 	id: i64,
 	doc_id: String,
@@ -34,8 +27,21 @@ struct DocInfo {
 	doc_id: String,
 	name: String,
 	last_updated: String,
-	revision_summary: Vec<RevisionSummary>,
 	owner_username: String,
+}
+
+#[derive(Deserialize)]
+struct RawWordChange {
+	#[serde(rename = "type")]
+	change_type: String,
+	text: String,
+}
+
+#[derive(Serialize)]
+struct DiffBlock {
+	#[serde(rename = "type")]
+	block_type: String, // "add", "del", or "neutral"
+	text: String,
 }
 
 #[derive(Deserialize)]
@@ -53,6 +59,9 @@ pub async fn get_docs(
 			let q = params.q.as_deref().unwrap_or("").to_lowercase();
 
 			// Fetch documents depending on search query
+			// We want to 1. display last_updated time
+			// 2. add functionality where we return a list of the latest updated documents
+			
 			let docs: Vec<DocRecord> = if !q.is_empty() {
 				let wildcard = format!("%{}%", q);
 				sqlx::query_as!(
@@ -87,36 +96,7 @@ pub async fn get_docs(
 				.await
 				.unwrap_or_else(|_| vec![])
 			};
-
-			// Enrich with revision summaries
-			let mut docs_with_summaries = Vec::with_capacity(docs.len());
-
-			for doc in docs {
-				let revisions = sqlx::query_as!(
-					RevisionSummary,
-					r#"
-					SELECT revision_time, added_words, deleted_words
-					FROM document_revisions
-					WHERE document_id = ?
-					ORDER BY revision_time DESC
-					LIMIT 100
-					"#,
-					doc.id
-				)
-				.fetch_all(&state.db)
-				.await
-				.unwrap_or_else(|_| vec![]);
-
-				docs_with_summaries.push(DocInfo {
-					doc_id: doc.doc_id,
-					name: doc.name,
-					last_updated: doc.last_updated,
-					owner_username: doc.owner_username,
-					revision_summary: revisions,
-				});
-			}
-
-			Json(docs_with_summaries).into_response()
+			Json(docs).into_response()
 		}
 		Err(code) => (code, "Unauthorized").into_response(),
 	}
@@ -157,13 +137,59 @@ pub async fn add_doc(
 	StatusCode::NO_CONTENT.into_response()
 }
 
+pub async fn get_diff(
+	State(state): State<AppState>,
+	Path(rev_id): Path<i64>,
+) -> impl IntoResponse {
+	let result = sqlx::query!(
+		r#"
+		SELECT diff FROM document_revisions WHERE id = ?
+		"#,
+		rev_id
+	)
+	.fetch_optional(&state.db)
+	.await;
+
+	match result {
+		Ok(Some(row)) => {
+			let diff_str = row.diff.unwrap_or_else(|| "[]".to_string());
+
+			let parsed: Result<Vec<RawWordChange>, _> = serde_json::from_str(&diff_str);
+			let transformed = match parsed {
+				Ok(items) => {
+					let result: Vec<DiffBlock> = items
+						.into_iter()
+						.map(|item| {
+							let block_type = match item.change_type.as_str() {
+								"Added" => "add",
+								"Removed" => "del",
+								"Unchanged" => "neutral",
+								_ => "neutral",
+							};
+							DiffBlock {
+								block_type: block_type.to_string(),
+								text: item.text,
+							}
+						})
+						.collect();
+					Json(result).into_response()
+				}
+				Err(_) => (StatusCode::INTERNAL_SERVER_ERROR, "Invalid diff format").into_response(),
+			};
+			transformed
+		}
+		Ok(None) => (StatusCode::NOT_FOUND, "Revision not found").into_response(),
+		Err(_) => (StatusCode::INTERNAL_SERVER_ERROR, "Database error").into_response(),
+	}
+}
+
 pub async fn get_revisions(
 	State(state): State<AppState>,
 	Path(doc_id): Path<String>,
 ) -> impl IntoResponse {
 	let revisions = sqlx::query!(
 		r#"
-		SELECT r.revision_time, r.diff, r.added_words, r.deleted_words
+		SELECT r.id, r.revision_time, r.added_words, r.deleted_words
 		FROM document_revisions r
 		JOIN documents d ON r.document_id = d.id
 		WHERE d.doc_id = ?
@@ -180,8 +206,8 @@ pub async fn get_revisions(
 				.into_iter()
 				.map(|r| {
 					serde_json::json!({
+						"id": r.id,
 						"revision_time": r.revision_time,
-						"diff": r.diff.unwrap_or_else(|| "[]".to_string()),
 						"added_words": r.added_words.unwrap_or(0),
 						"deleted_words": r.deleted_words.unwrap_or(0),
 					})

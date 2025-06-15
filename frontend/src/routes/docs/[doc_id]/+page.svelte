@@ -1,37 +1,26 @@
 <script lang="ts">
   
-  import { fetchRevisions } from '$lib/api/docs';
+  import { fetchRevisions, fetchDiff } from '$lib/api/docs';
+  import { Button } from "flowbite-svelte";
   import RevisionMiniPlot from '$lib/components/RevisionMiniPlot.svelte';
   import { page } from '$app/stores';
   import { docs } from '$lib/stores/docs';
   import { get } from 'svelte/store';
+  import { SvelteMap } from 'svelte/reactivity';
+  
+  type DiffBlock = { type: 'add' | 'del' | 'neutral'; text: string };
   
   // revisions reacts whenever doc_id changes, then html awaits response to render
   const revisions = $derived(fetchRevisions($page.params.doc_id));
   
-  type DiffBlock = { type: 'add' | 'del' | 'neutral', text: string };
+  let expandedDiffs = new SvelteMap();
   
-  function groupDiffWords(diffJson: string): DiffBlock[] {
-    
-      if (!diffJson || diffJson.trim() === "") {
-        return [];
-      }
-    
-    try {
-      const parsed = JSON.parse(diffJson);
-      if (!Array.isArray(parsed)) return [];
-  
-      return parsed.map((entry: { type: string; text: string }) => {
-        switch (entry.type) {
-          case 'Added': return { type: 'add', text: entry.text };
-          case 'Removed': return { type: 'del', text: entry.text };
-          case 'Unchanged': return { type: 'neutral', text: entry.text };
-          default: return { type: 'neutral', text: entry.text };
-        }
-      });
-    } catch (e) {
-      console.error("Failed to parse diff JSON:", e);
-      return [];
+  async function loadAndToggle(revId: number) {
+    if (!expandedDiffs.has(revId)) {
+      const diff = await fetchDiff(revId);
+      expandedDiffs.set(revId, diff);
+    } else {
+      expandedDiffs.delete(revId);
     }
   }
   
@@ -47,27 +36,34 @@
   <div class="p-6 space-y-6">
     <div class="w-full max-w-screen-lg space-y-6">
       <div class="w-full h-80 rounded flex items-center justify-center">
-        <RevisionMiniPlot docId={$page.params.doc_id ?? ''} />
+        <RevisionMiniPlot revisions={revisions ?? []} docId={$page.params.doc_id ?? ''} />
       </div>
+      <div class="text-black dark:text-white">{revisions.length} Revisions</div>
       <div class="w-full mx-auto p-4 space-y-4">
         {#each revisions as rev}
           <div class="border rounded p-4">
-            <div class="text-sm font-medium mb-1 text-black dark:text-white">
-              {formatTime(rev.revision_time)} — {rev.added_words} words added, {rev.deleted_words} words deleted
+            <div class="flex justify-between items-center text-sm font-medium mb-1 text-black dark:text-white">
+              <span>{formatTime(rev.revision_time)} — {rev.added_words} added, {rev.deleted_words} deleted</span>
+              <Button onclick={() => loadAndToggle(rev.id)}>
+                {expandedDiffs.has(rev.id) ? 'Hide' : 'Show'} Diff
+              </Button>
             </div>
-            <div class="overflow-y-auto border rounded p-2 text-sm leading-snug" style="height: 30vh;">
-              {#each groupDiffWords(rev.diff) as block}
-                {#if block.text === '\n'}
-                  <br />
-                {:else if block.type === 'add'}
-                  <span class="text-green-600">{block.text}</span>
-                {:else if block.type === 'del'}
-                  <span class="text-red-600 line-through">{block.text}</span>
-                {:else}
-                  <span class="text-black dark:text-white">{block.text}</span>
-                {/if}
-              {/each}
-            </div>
+        
+            {#if expandedDiffs.has(rev.id)}
+              <div class="overflow-y-auto border rounded p-2 text-sm leading-snug" style="height: 30vh;">
+                {#each expandedDiffs.get(rev.id) as block}
+                  {#if block.text === '\n'}
+                    <br />
+                  {:else if block.type === 'add'}
+                    <span class="text-green-600">{block.text}</span>
+                  {:else if block.type === 'del'}
+                    <span class="text-red-600 line-through">{block.text}</span>
+                  {:else}
+                    <span class="text-black dark:text-white">{block.text}</span>
+                  {/if}
+                {/each}
+              </div>
+            {/if}
           </div>
         {/each}
       </div>

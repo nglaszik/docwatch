@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "\n\t\tSELECT diff FROM document_revisions WHERE id = ?\n\t\t",
+  "describe": {
+    "columns": [
+      {
+        "name": "diff",
+        "ordinal": 0,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      true
+    ]
+  },
+  "hash": "7748fb92c635eaf2d5a24a06a0b612b69259fc166a036eba02b1eefa3d8abdd5"
+}
