@@ -10,7 +10,7 @@
     if (res.ok) {
       const data = await res.json();
       user.set({ username: data.username });
-      goto(`${base}/docs`);
+      goto(`${base}/u/folders/home`);
     } else {
       goto(`${base}/login`);
     }

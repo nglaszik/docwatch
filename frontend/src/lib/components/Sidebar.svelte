@@ -1,56 +1,35 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import { goto } from '$app/navigation';
+  
   import { base } from '$app/paths';
-  import { page } from '$app/state';
   import { Sidebar, SidebarGroup, SidebarItem, Button } from 'flowbite-svelte';
-  import { SearchOutline } from 'flowbite-svelte-icons';
-  import { fetchDocs } from '$lib/api/docs';
-  import { logout } from '$lib/api/auth';
-  import { docs } from '$lib/stores/docs';
+  import { FolderOutline, ChartMixedOutline } from "flowbite-svelte-icons";
   
-  let { isOpen = false, closeSidebar = () => {}, openSearchOverlay = () => {} } = $props();
-  
-  // use this in addition to onMount for triggering reactivity in pages
-  let activeUrl = $state(page.url.pathname);
-  
-  // may want to create an await here too, or put this elsewhere... need to make sure that docs are loaded before revision miniplot is loaded. it's fine here since $docs is reactive anyway
-  
-  onMount(async () => {
-    docs.load();
-  });
-  
-  $effect(() => {
-    activeUrl = page.url.pathname;
-    docs.load();
-  });
+  let { isOpen = false, closeSidebar = () => {} } = $props();
   
 </script>
 
 <Sidebar
-  {activeUrl}
   isOpen={isOpen}
   closeSidebar={closeSidebar}
   backdrop={false}
-  activeClass="sidebar-active flex items-center p-2 rounded-lg"
-  nonActiveClass="sidebar-inactive flex items-center p-2 rounded-lg"
+  activeClass="sidebar-active flex items-center p-2 rounded-md"
+  nonActiveClass="sidebar-inactive flex items-center p-2 rounded-md"
   position="absolute"
-  class="h-full"
+  class="h-full w-48 py-2"
 >
   <!-- Search -->
   <SidebarGroup>
-    <Button onclick={openSearchOverlay}>Add Document</Button>
-  </SidebarGroup>
-
-  <!-- Watched Docs -->
-  <SidebarGroup label="Watched Docs">
-    {#each $docs as doc}
-      <SidebarItem
-        href={`${base}/docs/${doc.doc_id}`}
-        label={doc.name}
-      >
-      </SidebarItem>
-    {/each}
+    <SidebarItem label="Menu"></SidebarItem>
+    <SidebarItem href={`${base}/u/folders/home`} label="Folders">
+      {#snippet icon()}
+        <FolderOutline />
+      {/snippet}
+    </SidebarItem>
+    <SidebarItem label="Reports">
+      {#snippet icon()}
+        <ChartMixedOutline />
+      {/snippet}
+    </SidebarItem>
   </SidebarGroup>
 </Sidebar>
 

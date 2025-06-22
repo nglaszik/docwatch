@@ -1,0 +1,50 @@
+{
+  "db_name": "SQLite",
+  "query": "\n\t\t\tSELECT\n\t\t\t\tud.id,\n\t\t\t\td.doc_id,\n\t\t\t\tCOALESCE(ud.folder_name, d.name) AS name,\n\t\t\t\tud.is_folder,\n\t\t\t\td.last_updated,\n\t\t\t\td.owner_username\n\t\t\tFROM user_documents ud\n\t\t\tLEFT JOIN documents d ON ud.document_id = d.id\n\t\t\tWHERE ud.user_id = ? AND ud.id_parent IS NULL\n\t\t\t",
+  "describe": {
+    "columns": [
+      {
+        "name": "id",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "doc_id",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "name",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "is_folder",
+        "ordinal": 3,
+        "type_info": "Bool"
+      },
+      {
+        "name": "last_updated",
+        "ordinal": 4,
+        "type_info": "Text"
+      },
+      {
+        "name": "owner_username",
+        "ordinal": 5,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      true,
+      true,
+      true,
+      false,
+      true,
+      true
+    ]
+  },
+  "hash": "5f624d3a117a8369d7bde8298fd71f88e116824b2020b838cabf16c4515f7774"
+}

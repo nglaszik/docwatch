@@ -33,9 +33,15 @@ CREATE TABLE IF NOT EXISTS document_revisions (
 );
 
 CREATE TABLE IF NOT EXISTS user_documents (
+	id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
 	user_id INTEGER NOT NULL,
-	document_id INTEGER NOT NULL,
-	PRIMARY KEY (user_id, document_id),
+	document_id INTEGER,
+	id_parent TEXT,
+	is_folder BOOLEAN NOT NULL DEFAULT FALSE,
+	folder_name TEXT,
 	FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-	FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE CASCADE
+	FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE CASCADE,
+	FOREIGN KEY (id_parent) REFERENCES user_documents(id) ON DELETE SET DEFAULT
 );
+
+CREATE UNIQUE INDEX idx_user_documents_unique ON user_documents(user_id, document_id);

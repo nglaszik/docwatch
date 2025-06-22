@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n\t\tDELETE FROM user_documents\n\t\tWHERE id_parent = ? AND user_id = ?\n\t\t",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "7be04ac4564b51470467ff06a8e6f1df56e11ed4ac5f9fbb4344c4c643b134f6"
+}

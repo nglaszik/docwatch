@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n\t\t\t\tUPDATE user_documents\n\t\t\t\tSET folder_name = ?\n\t\t\t\tWHERE id = ? AND user_id = ? AND is_folder = TRUE\n\t\t\t\t",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "641ca7c4dc55dad5e198134e57a4c95b1660685c653979680d106e8195cad0c9"
+}

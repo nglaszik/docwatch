@@ -1,14 +1,9 @@
 <!-- src/routes/docs/+layout.svelte -->
 <script lang="ts">
-  
   import { onMount } from 'svelte';
-  
   import { Navbar, NavBrand, NavLi, NavUl, NavHamburger, Avatar, Dropdown, DropdownItem, DropdownHeader, DropdownGroup, uiHelpers, SidebarButton, DarkMode } from "flowbite-svelte";
-  
   import Sidebar from '$lib/components/Sidebar.svelte';
-  import SearchOverlay from '$lib/components/SearchOverlay.svelte';
   
-  import { writable, derived } from 'svelte/store';
   import { logout } from '$lib/api/auth';
   import { goto } from '$app/navigation';
   import { base } from '$app/paths';
@@ -28,8 +23,6 @@
     username = $user?.username ?? '';
     initial = $user?.username?.charAt(0).toUpperCase() ?? '';
   });
-
-  const showSearchOverlay = writable(false);
 
   function handleLogout() {
     logout().then(() => goto(`${base}/login`));
@@ -73,20 +66,13 @@
   <Sidebar
     isOpen={isOpen}
     closeSidebar={sidebarUi.close}
-    openSearchOverlay={() => showSearchOverlay.set(true)}
   />
 
   <div class="flex h-full">
     <div class="flex-1 flex flex-col">
-      <main class="flex-1 overflow-auto md:ml-64">
+      <main class="flex-1 overflow-auto md:ml-48">
         <slot />
       </main>
     </div>
   </div>
 </div>
-
-<!-- Search Overlay modal (flows above everything else) -->
-<SearchOverlay
-  open={$showSearchOverlay}
-  onClose={() => showSearchOverlay.set(false)}
-/>

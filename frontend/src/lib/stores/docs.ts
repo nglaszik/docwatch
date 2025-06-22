@@ -1,22 +1,29 @@
 // src/lib/stores/docs.ts
 import { writable } from 'svelte/store';
 import type { Doc } from '$lib/api/docs';
+import type { Breadcrumb } from '$lib/api/docs';
 import { fetchDocs } from '$lib/api/docs';
 
-const { subscribe, set } = writable<Doc[]>([]);
+type DocsState = {
+  docs: Doc[];
+  breadcrumbs: Breadcrumb[];
+  hasLoaded: boolean;
+};
 
-let hasLoaded = false;
+const { subscribe, set, update } = writable<DocsState>({ docs: [], breadcrumbs: [], hasLoaded: false, });
 
-async function load(force = false) {
-  if (hasLoaded && !force) return;
-  const data = await fetchDocs();
-  set(data);
-  hasLoaded = true;
+async function load(id_parent: string | null = null) {
+  const data = await fetchDocs(id_parent);
+  //set(data);
+  set({
+    docs: data.docs,
+    breadcrumbs: data.breadcrumbs,
+    hasLoaded: true,
+  });
 }
 
 function clear() {
-  set([]);
-  hasLoaded = false;
+  set({ docs: [], breadcrumbs: [], hasLoaded: false,});
 }
 
 export const docs = {

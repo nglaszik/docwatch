@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "\n\t\tINSERT INTO user_documents (id, user_id, is_folder, folder_name, id_parent)\n\t\tVALUES (?, ?, TRUE, ?, ?)\n\t\tRETURNING id\n\t\t",
+  "describe": {
+    "columns": [
+      {
+        "name": "id",
+        "ordinal": 0,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": [
+      true
+    ]
+  },
+  "hash": "c15715d01f181125074ad78031ddfb2b0bf6ec4689e8cae1d3ce7d4a327d7731"
+}

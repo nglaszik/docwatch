@@ -1,12 +1,13 @@
 <script lang="ts">
   
   import { fetchRevisions, fetchDiff } from '$lib/api/docs';
-  import { Button } from "flowbite-svelte";
+  import { Button, Breadcrumb, BreadcrumbItem } from 'flowbite-svelte';
   import RevisionMiniPlot from '$lib/components/RevisionMiniPlot.svelte';
   import { page } from '$app/stores';
   import { docs } from '$lib/stores/docs';
   import { get } from 'svelte/store';
   import { SvelteMap } from 'svelte/reactivity';
+  import { base } from '$app/paths';
   
   type DiffBlock = { type: 'add' | 'del' | 'neutral'; text: string };
   
@@ -33,7 +34,16 @@
 
 {#await revisions}
 {:then revisions}
+
   <div class="p-6 space-y-6">
+    
+    <Breadcrumb aria-label="Default breadcrumb example">
+      <BreadcrumbItem href={`${base}/u/folders/home`} home>Home</BreadcrumbItem>
+      {#each $docs.breadcrumbs as breadcrumb}
+        <BreadcrumbItem href={`${base}/u/folders/${breadcrumb.id}`}>{breadcrumb.name}</BreadcrumbItem>
+      {/each}
+    </Breadcrumb>
+    
     <div class="w-full max-w-screen-lg space-y-6">
       <div class="w-full h-80 rounded flex items-center justify-center">
         <RevisionMiniPlot revisions={revisions ?? []} docId={$page.params.doc_id ?? ''} />

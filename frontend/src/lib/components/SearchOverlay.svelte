@@ -2,7 +2,7 @@
   import { Modal, Input, Button } from 'flowbite-svelte';
   import { searchDocs, addToWatchlist } from '$lib/api/docs';
   import { docs } from '$lib/stores/docs';
-
+  import { page } from "$app/state";
   let { open = false, onClose = () => {} } = $props();
 
   let query = $state('');
@@ -14,7 +14,8 @@
   
   async function handleAdd(docId: string) {
     await addToWatchlist(docId);
-    await docs.load(true); // added this!
+    await docs.load(page.params.folder_id);
+    alert("Added to watchlist");
   }
   
   $effect(() => {

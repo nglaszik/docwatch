@@ -44,7 +44,7 @@ install:
 	@echo "Creating empty production database..."
 	touch $(WORK_DIR)/data/docwatch.db
 	chown www-data:www-data $(WORK_DIR)/data/docwatch.db
-	cp -r migrations $(WORK_DIR)/migrations
+	cp -r migrations/* $(WORK_DIR)/migrations
 	
 	@echo "Installing frontend files..."
 	cp -r frontend/dist/* $(WORK_DIR)/frontend/

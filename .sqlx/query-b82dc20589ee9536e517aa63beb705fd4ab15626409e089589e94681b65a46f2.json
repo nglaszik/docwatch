@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n\t\t\t\tUPDATE user_documents\n\t\t\t\tSET id_parent = ?\n\t\t\t\tWHERE id = ? AND user_id = ?\n\t\t\t\t",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "b82dc20589ee9536e517aa63beb705fd4ab15626409e089589e94681b65a46f2"
+}

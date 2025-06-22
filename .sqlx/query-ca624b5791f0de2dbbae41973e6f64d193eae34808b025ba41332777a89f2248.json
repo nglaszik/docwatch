@@ -1,0 +1,32 @@
+{
+  "db_name": "SQLite",
+  "query": "\n\t\t\tSELECT id, folder_name, id_parent\n\t\t\tFROM user_documents\n\t\t\tWHERE id = ? AND user_id = ? AND is_folder = TRUE\n\t\t\t",
+  "describe": {
+    "columns": [
+      {
+        "name": "id",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "folder_name",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "id_parent",
+        "ordinal": 2,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": [
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "ca624b5791f0de2dbbae41973e6f64d193eae34808b025ba41332777a89f2248"
+}
